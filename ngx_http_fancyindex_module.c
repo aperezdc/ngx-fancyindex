@@ -50,11 +50,16 @@ typedef struct {
     ngx_flag_t     enable;
     ngx_flag_t     localtime;
     ngx_flag_t     exact_size;
+
+    ngx_str_t      header;
+    ngx_flag_t     header_pre;
+
+    ngx_str_t      footer;
+    ngx_flag_t     footer_pre;
 } ngx_http_fancyindex_loc_conf_t;
 
 
 #define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
-
 #define NGX_HTTP_FANCYINDEX_NAME_LEN     50
 
 
@@ -89,6 +94,34 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       ngx_conf_set_flag_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, exact_size),
+      NULL },
+
+    { ngx_string("fancyindex_header"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_str_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, header),
+      NULL },
+
+    { ngx_string("fancyindex_header_pre"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, header_pre),
+      NULL },
+
+    { ngx_string("fancyindex_footer"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_str_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, footer),
+      NULL },
+
+    { ngx_string("fancyindex_footer_pre"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, footer_pre),
       NULL },
 
       ngx_null_command
@@ -634,6 +667,12 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
 
+    ngx_conf_merge_value(conf->footer_pre, prev->footer_pre, 1);
+    ngx_conf_merge_value(conf->header_pre, prev->header_pre, 1);
+
+    ngx_conf_merge_str_value(conf->header, prev->header, "");
+    ngx_conf_merge_str_value(conf->footer, prev->footer, "");
+
     return NGX_CONF_OK;
 }
 
@@ -655,3 +694,6 @@ ngx_http_fancyindex_init(ngx_conf_t *cf)
 
     return NGX_OK;
 }
+
+/* vim:et:sw=4:ts=4:
+ */
