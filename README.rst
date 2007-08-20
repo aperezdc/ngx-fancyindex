@@ -2,6 +2,8 @@
 Nginx_ Fancy Index module
 =========================
 
+.. contents::
+
 Requirements
 ============
 * Sources for Nginx_ 0.6.6, and its requirements.
@@ -41,12 +43,16 @@ Building
 Directives
 ==========
 
+fancyindex
+~~~~~~~~~~
 :Syntax: *fancyindex* [*on* | *off*]
 :Default: fancyindex off
 :Context: http, server, location
 :Description:
   Enables or disables fancy directory indexes.
 
+fancyindex_localtime
+~~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_localtime* [*on* | *off*]
 :Default: fancyindex_localtime off
 :Context: http, server, location
@@ -55,12 +61,16 @@ Directives
   accurately, or rounding off to the kilobyte, the megabyte and the
   gigabyte.
 
+fancyindex_exact_size
+~~~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_exact_size* [*on* | *off*]
 :Default: fancyindex_exact_size on
 :Context: http, server, location
 :Description:
   Enables showing file times as local time. Default is “off” (GMT time).
 
+fancyindex_header
+~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_header path*
 :Default: fancyindex_header ""
 :Context: http, server, location
@@ -69,6 +79,8 @@ Directives
   If set to an empty string, the default header supplied by the module will
   be sent.
 
+fancyindex_header_pre
+~~~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_header_pre* [*on* | *off*]
 :Default: fancyindex_header_pre on
 :Context: http, server, location
@@ -77,6 +89,8 @@ Directives
   after the module's own header. This is suitable for including
   preformatting text.
 
+fancyindex_footer
+~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_footer path*
 :Default: fancyindex_footer ""
 :Context: http, server, location
@@ -85,6 +99,8 @@ Directives
   If set to an empty string, the default footer supplied by the module will
   be sent.
 
+fancyindex_footer_pre
+~~~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_footer_pre* [*on* | *off*]
 :Default: fancyindex_footer_pre on
 :Context: http, server, location
