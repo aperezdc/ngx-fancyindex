@@ -1,0 +1,68 @@
+=========================
+Nginx_ Fancy Index module
+=========================
+
+Requirements
+============
+* Sources for Nginx_ 0.6.6, and its requirements.
+* Patience, and some Coffee™.
+
+
+Building
+========
+
+1. Unpack the Nginx_ sources::
+
+    $ gunzip -c nginx-0.6.6.tar.gz | tar -xvf -
+
+2. Unpack the sources for the fancy indexing module::
+
+    $ gunzip -c nginx-fancyindex-?.?.?.tar.gz | tar -xvf -
+
+3. Change to the directory which contains the Nginx_ sources, run the
+   configuration script with the desired options and be sure to put an
+   ``--add-module`` flag pointing to the directory which contains the source
+   of the fancy indexing module::
+
+    $ cd nginx-0.6.6
+    $ ./configure --add-module=../nginx-?.?.?  [extra desired options]
+
+4. Build and install the software::
+
+    $ make
+  
+   And then, as ``root``::
+
+    # make install
+
+5. Configure Nginx_ by using the modules' configuration directives_.
+
+
+Directives
+==========
+
+:Syntax: fancyindex [on | off]
+:Default: fancyindex off
+:Context: http, server, location
+:Description:
+  Enables or disables fancy directory indexes.
+
+:Syntax: fancyindex_localtime [on | off]
+:Default: fancyindex_localtime off
+:Context: http, server, location
+:Description:
+  Defines how to represent file sizes in the directory listing; either
+  accurately, or rounding off to the kilobyte, the megabyte and the
+  gigabyte.
+
+:Syntax: fancyindex_exact_size [on | off]
+:Default: fancyindex_exact_size on
+:Context: http, server, location
+:Description:
+  Enables showing file times as local time. Default is “off” (GMT time).
+
+
+.. _nginx: http://nginx.net
+
+.. vim:ft=rst:spell:spelllang=en:
+
