@@ -79,16 +79,6 @@ fancyindex_header
   If set to an empty string, the default header supplied by the module will
   be sent.
 
-fancyindex_header_pre
-~~~~~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_header_pre* [*on* | *off*]
-:Default: fancyindex_header_pre on
-:Context: http, server, location
-:Description:
-  Wrap contents of the file being sent as header in a ``<pre>`` element,
-  after the module's own header. This is suitable for including
-  preformatting text.
-
 fancyindex_footer
 ~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_footer path*
@@ -99,15 +89,40 @@ fancyindex_footer
   If set to an empty string, the default footer supplied by the module will
   be sent.
 
-fancyindex_footer_pre
-~~~~~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_footer_pre* [*on* | *off*]
-:Default: fancyindex_footer_pre on
+fancyindex_readme
+~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_readme path*
+:Default: fancyindex_readme ""
 :Context: http, server, location
 :Description:
-  Wrap contents of the file being sent as footer in a ``<pre>`` element,
-  after the module's own header. This is suitable for including
-  preformatting text.
+  Specifies which file should be inserted alongside with directory listings.
+  If set to an empty string, no extra textual content is included. See
+  `fancyindex_readme_options` in order to learn more about how the readme
+  file may be included.
+
+fancyindex_readme_options
+~~~~~~~~~~~~~~~~~~~~~~~~~
+:Syntax:
+  *fancyindex_readme_options* *pre* | *asis* | *top* | *bottom* | *div* ...
+:Default: fancyindex_readme_options top pre
+:Context: http, server, location
+  Controls how to include the readme file specified by `fancyindex_readme`.
+  Available options are:
+
+    pre
+      Send included readme file inside a preformatted text block (i.e. an
+      HTML ``<pre>`` element.
+    asis
+      Send included readme file “as-is”, i.e. without altering its contents.
+      This is useful to include raw HTML snippets in the generated listings.
+    top
+      Place readme file contents at the top, before the listings.
+    bottom
+      Place readme file contents at the bottom, after the listings.
+    div
+      Wrap up all the text generated for the readme (including the enclosing
+      ``<pre>`` element, if configured) inside a ``<div>`` element. The
+      layer will have the ``readme`` CSS class set.
 
 .. _nginx: http://nginx.net
 

@@ -36,6 +36,13 @@ typedef struct {
 #endif
 
 
+#define NGX_HTTP_FANCYINDEX_README_PRE    0x00
+#define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
+#define NGX_HTTP_FANCYINDEX_README_TOP    0x00
+#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x02
+#define NGX_HTTP_FANCYINDEX_README_DIV    0x03
+
+
 typedef struct {
     ngx_str_t      name;
     size_t         utf_len;
@@ -52,10 +59,10 @@ typedef struct {
     ngx_flag_t     exact_size;
 
     ngx_str_t      header;
-    ngx_flag_t     header_pre;
-
     ngx_str_t      footer;
-    ngx_flag_t     footer_pre;
+    ngx_str_t      readme;
+
+    ngx_uint_t     readme_flags;
 } ngx_http_fancyindex_loc_conf_t;
 
 
@@ -71,6 +78,17 @@ static ngx_int_t ngx_http_fancyindex_init(ngx_conf_t *cf);
 static void *ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf);
 static char *ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf,
     void *parent, void *child);
+
+
+
+static ngx_conf_bitmask_t ngx_http_fancyindex_readme_flags[] = {
+    { ngx_string("pre"),    NGX_HTTP_FANCYINDEX_README_PRE    },
+    { ngx_string("asis"),   NGX_HTTP_FANCYINDEX_README_ASIS   },
+    { ngx_string("top"),    NGX_HTTP_FANCYINDEX_README_TOP    },
+    { ngx_string("bottom"), NGX_HTTP_FANCYINDEX_README_BOTTOM },
+    { ngx_string("div"),    NGX_HTTP_FANCYINDEX_README_DIV    },
+    { ngx_null_string,      0                                 },
+};
 
 
 static ngx_command_t  ngx_http_fancyindex_commands[] = {
@@ -103,13 +121,6 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       offsetof(ngx_http_fancyindex_loc_conf_t, header),
       NULL },
 
-    { ngx_string("fancyindex_header_pre"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
-      ngx_conf_set_flag_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_fancyindex_loc_conf_t, header_pre),
-      NULL },
-
     { ngx_string("fancyindex_footer"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_str_slot,
@@ -117,12 +128,19 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       offsetof(ngx_http_fancyindex_loc_conf_t, footer),
       NULL },
 
-    { ngx_string("fancyindex_footer_pre"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
-      ngx_conf_set_flag_slot,
+    { ngx_string("fancyindex_readme"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_str_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_fancyindex_loc_conf_t, footer_pre),
+      offsetof(ngx_http_fancyindex_loc_conf_t, readme),
       NULL },
+
+    { ngx_string("fancyindex_readme_options"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_bitmask_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, readme_flags),
+      &ngx_http_fancyindex_readme_flags },
 
       ngx_null_command
 };
@@ -667,11 +685,12 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
 
-    ngx_conf_merge_value(conf->footer_pre, prev->footer_pre, 1);
-    ngx_conf_merge_value(conf->header_pre, prev->header_pre, 1);
-
     ngx_conf_merge_str_value(conf->header, prev->header, "");
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");
+    ngx_conf_merge_str_value(conf->readme, prev->readme, "");
+
+    ngx_conf_merge_bitmask_value(conf->readme_flags, prev->readme_flags,
+            (NGX_HTTP_FANCYINDEX_README_TOP | NGX_HTTP_FANCYINDEX_README_PRE));
 
     return NGX_CONF_OK;
 }
