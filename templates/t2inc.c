@@ -1,5 +1,5 @@
 /*
- * t2h.c
+ * t2inc.c
  * Copyright (C) 2007 acastro <acastro@slump>
  *
  * Distributed under terms of the MIT license.
@@ -51,6 +51,11 @@ main(int argc, char **argv)
 	printf("\"\n");
 
 	/* check whether an error was produced */
+	if (ferror(stdout)) {
+		fprintf(stderr, "%s: error writing output, %s\n", argv[0], strerror(errno));
+		fflush(stderr);
+		exit(EXIT_FAILURE);
+	}
 	if ((c == EOF) && ferror(stdin)) {
 		fprintf(stderr, "%s: error reading input, %s\n", argv[0], strerror(errno));
 		fflush(stderr);
