@@ -106,6 +106,7 @@ fancyindex_readme_options
   *fancyindex_readme_options* *pre* | *asis* | *top* | *bottom* | *div* ...
 :Default: fancyindex_readme_options top pre
 :Context: http, server, location
+:Description:
   Controls how to include the readme file specified by `fancyindex_readme`_.
   Available options are:
 
