@@ -124,6 +124,12 @@ fancyindex_readme_options
       Wrap up all the text generated for the readme (including the enclosing
       ``<pre>`` element, if configured) inside a ``<div>`` element. The
       layer will have the ``readme`` CSS class set.
+    iframe
+      Insert an ``<iframe>`` element which references the readme file
+      instead if inlining it in the generated file index. Note that this
+      will instruct the client to perform an additional request in order to
+      fetch the contents of the frame.
+
 
 .. _nginx: http://nginx.net
 

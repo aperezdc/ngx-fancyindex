@@ -35,12 +35,16 @@ typedef struct {
 
 #endif
 
+#define _BIT(_n)  (1 << (_n))
 
-#define NGX_HTTP_FANCYINDEX_README_PRE    0x00
-#define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
-#define NGX_HTTP_FANCYINDEX_README_TOP    0x00
-#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x02
-#define NGX_HTTP_FANCYINDEX_README_DIV    0x03
+#define NGX_HTTP_FANCYINDEX_README_TOP        (0)
+#define NGX_HTTP_FANCYINDEX_README_PRE        (0)
+#define NGX_HTTP_FANCYINDEX_README_ASIS   _BIT(1)
+#define NGX_HTTP_FANCYINDEX_README_BOTTOM _BIT(2)
+#define NGX_HTTP_FANCYINDEX_README_DIV    _BIT(3)
+#define NGX_HTTP_FANCYINDEX_README_IFRAME _BIT(4)
+
+#undef _BIT
 
 
 typedef struct {
@@ -87,6 +91,7 @@ static ngx_conf_bitmask_t ngx_http_fancyindex_readme_flags[] = {
     { ngx_string("top"),    NGX_HTTP_FANCYINDEX_README_TOP    },
     { ngx_string("bottom"), NGX_HTTP_FANCYINDEX_README_BOTTOM },
     { ngx_string("div"),    NGX_HTTP_FANCYINDEX_README_DIV    },
+    { ngx_string("iframe"), NGX_HTTP_FANCYINDEX_README_IFRAME },
     { ngx_null_string,      0                                 },
 };
 
@@ -662,14 +667,24 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
 {
     ngx_http_fancyindex_loc_conf_t  *conf;
 
-    conf = ngx_palloc(cf->pool, sizeof(ngx_http_fancyindex_loc_conf_t));
+    conf = ngx_pcalloc(cf->pool, sizeof(ngx_http_fancyindex_loc_conf_t));
     if (conf == NULL) {
         return NGX_CONF_ERROR;
     }
 
+    /*
+     * Set by ngx_pcalloc:
+     *    conf->header.len  = 0
+     *    conf->header.data = NULL
+     *    conf->footer.len  = 0
+     *    conf->footer.data = NULL
+     *    conf->readme.len  = 0
+     *    conf->readme.data = NULL
+     */
     conf->enable = NGX_CONF_UNSET;
     conf->localtime = NGX_CONF_UNSET;
     conf->exact_size = NGX_CONF_UNSET;
+    conf->readme_flags = NGX_CONF_UNSET;
 
     return conf;
 }
