@@ -1,8 +1,29 @@
 /*
  * t2inc.c
- * Copyright (C) 2007 acastro <acastro@slump>
+ * Copyright (C) 2007 Adrian Perez <adrianperez@udc.es>
  *
- * Distributed under terms of the MIT license.
+ *
+ * About t2inc
+ * ~~~~~~~~~~~
+ * Flattens HTML-like text to C strings. Some whitespace
+ * is removed to minimize output size.
+ *
+ *
+ * Usage
+ * ~~~~~
+ * Compile it and use as a filter in a shell pipeline:
+ *
+ *    $ cc -o t2inc t2inc.c
+ *    $ ./t2inc < input.t > output.inc
+ *    $ cat *.t | ./t2inc > alloutput.inc
+ *
+ * ...and so on.
+ *
+ *
+ * License
+ * ~~~~~~~
+ * This code is placed in the public domain.
+ *
  */
 
 #include <stdlib.h>
