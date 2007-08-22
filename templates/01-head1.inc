@@ -3,4 +3,4 @@
 "99/xhtml\"><head><style type=\"text/css\">body, html {background: #fff;}tr"
 ".o {background: #eee;}th {font-weight: bold;background: #ddd;}</style><"
 "meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"/><tit"
-"le>"
+"le>Index of "

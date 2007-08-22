@@ -1,6 +1,6 @@
 /*
  * ngx_http_fancyindex_module.c
- * Copyright (C) 2007 Adrian Perez <adrianperez@udc.es>
+ * Copyright © 2007 Adrian Perez <adrianperez@udc.es>
  *
  * Module used for fancy indexing of directories. Features and differences
  * with the stock nginx autoindex module:
@@ -13,9 +13,10 @@
  *  - Proper HTML is generated: it should validate both as XHTML 1.0 Strict
  *    and HTML 4.01.
  *
- * Base functionality heavy based upon the stock nginx autoindex module.
+ * Base functionality heavy based upon the stock nginx autoindex module,
+ * which in turn was made by Igor Sysoev, like the majority of nginx.
  *
- * Distributed under terms of the MIT license.
+ * Distributed under terms of the BSD license.
  */
 
 #include <ngx_config.h>
@@ -178,22 +179,7 @@ ngx_module_t  ngx_http_fancyindex_module = {
 };
 
 
-static u_char title[] =
-"<html>" CRLF
-"<head><title>Index of "
-;
-
-
-static u_char header[] =
-"</title></head>" CRLF
-"<body bgcolor=\"white\">" CRLF
-"<h1>Index of "
-;
-
-static u_char tail[] =
-"</body>" CRLF
-"</html>" CRLF
-;
+#include "templates/templates.inc"
 
 
 static ngx_int_t
@@ -402,14 +388,12 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
                       ngx_close_dir_n " \"%s\" failed", &path);
     }
 
-    len = sizeof(title) - 1
+    len = NGX_HTTP_FANCYINDEX_TEMPLATE_SIZE
           + r->uri.len
-          + sizeof(header) - 1
           + r->uri.len
           + sizeof("</h1>") - 1
           + sizeof("<hr><pre><a href=\"../\">../</a>" CRLF) - 1
-          + sizeof("</pre><hr>") - 1
-          + sizeof(tail) - 1;
+          + sizeof("</pre><hr>") - 1;
 
     entry = entries.elts;
     for (i = 0; i < entries.nelts; i++) {
@@ -436,10 +420,13 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
                   ngx_http_fancyindex_cmp_entries);
     }
 
-    b->last = ngx_cpymem(b->last, title, sizeof(title) - 1);
+    b->last = ngx_cpymem(b->last, t01_head1, sizeof(t01_head1) - 1);
     b->last = ngx_cpymem(b->last, r->uri.data, r->uri.len);
-    b->last = ngx_cpymem(b->last, header, sizeof(header) - 1);
+    b->last = ngx_cpymem(b->last, t02_head2, sizeof(t02_head2) - 1);
+
+    b->last = ngx_cpymem(b->last, t03_body1, sizeof(t03_body1) - 1);
     b->last = ngx_cpymem(b->last, r->uri.data, r->uri.len);
+    b->last = ngx_cpymem(b->last, t03_body1, sizeof(t03_body1) - 1);
     b->last = ngx_cpymem(b->last, "</h1>", sizeof("</h1>") - 1);
 
     b->last = ngx_cpymem(b->last, "<hr><pre><a href=\"../\">../</a>" CRLF,
@@ -573,7 +560,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
 
     b->last = ngx_cpymem(b->last, "</pre><hr>", sizeof("</pre><hr>") - 1);
 
-    b->last = ngx_cpymem(b->last, tail, sizeof(tail) - 1);
+    b->last = ngx_cpymem(b->last, t09_foot1, sizeof(t09_foot1) - 1);
 
     if (r == r->main) {
         b->last_buf = 1;
