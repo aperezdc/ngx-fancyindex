@@ -179,7 +179,7 @@ ngx_module_t  ngx_http_fancyindex_module = {
 };
 
 
-#include "templates/templates.inc"
+#include "templates/templates.h"
 
 
 static ngx_int_t
@@ -388,12 +388,10 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
                       ngx_close_dir_n " \"%s\" failed", &path);
     }
 
-    len = NGX_HTTP_FANCYINDEX_TEMPLATE_SIZE
-          + r->uri.len
-          + r->uri.len
-          + sizeof("</h1>") - 1
-          + sizeof("<hr><pre><a href=\"../\">../</a>" CRLF) - 1
-          + sizeof("</pre><hr>") - 1;
+    len = NFI_TEMPLATE_SIZE
+          + r->uri.len /* URI is included two times: as <title> in the */
+          + r->uri.len /* HTML head and as an <h1> in the HTML body    */
+          ;
 
     entry = entries.elts;
     for (i = 0; i < entries.nelts; i++) {
@@ -420,22 +418,21 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
                   ngx_http_fancyindex_cmp_entries);
     }
 
-    b->last = ngx_cpymem(b->last, t01_head1, sizeof(t01_head1) - 1);
-    b->last = ngx_cpymem(b->last, r->uri.data, r->uri.len);
-    b->last = ngx_cpymem(b->last, t02_head2, sizeof(t02_head2) - 1);
+    b->last = nfi_cpymem_ssz(b->last, t01_head1);
+    b->last = nfi_cpymem_str(b->last, r->uri);
+    b->last = nfi_cpymem_ssz(b->last, t02_head2);
 
-    b->last = ngx_cpymem(b->last, t03_body1, sizeof(t03_body1) - 1);
-    b->last = ngx_cpymem(b->last, r->uri.data, r->uri.len);
-    b->last = ngx_cpymem(b->last, t03_body1, sizeof(t03_body1) - 1);
-    b->last = ngx_cpymem(b->last, "</h1>", sizeof("</h1>") - 1);
+    b->last = nfi_cpymem_ssz(b->last, t03_body1);
+    b->last = nfi_cpymem_str(b->last, r->uri);
+    b->last = nfi_cpymem_ssz(b->last, t04_body2);
 
-    b->last = ngx_cpymem(b->last, "<hr><pre><a href=\"../\">../</a>" CRLF,
-                         sizeof("<hr><pre><a href=\"../\">../</a>" CRLF) - 1);
+    /* Output table header */
+    b->last = nfi_cpymem_ssz(b->last, t05_list1);
 
     tp = ngx_timeofday();
 
     for (i = 0; i < entries.nelts; i++) {
-        b->last = ngx_cpymem(b->last, "<a href=\"", sizeof("<a href=\"") - 1);
+        b->last = nfi_cpymem_ssz(b->last, "<a href=\"");
 
         if (entry[i].escape) {
             ngx_escape_uri(b->last, entry[i].name.data, entry[i].name.len,
@@ -501,16 +498,14 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
 
         if (alcf->exact_size) {
             if (entry[i].dir) {
-                b->last = ngx_cpymem(b->last,  "                  -",
-                                     sizeof("                  -") - 1);
+                b->last = nfi_cpymem_ssz(b->last, "                  -");
             } else {
                 b->last = ngx_sprintf(b->last, "%19O", entry[i].size);
             }
 
         } else {
             if (entry[i].dir) {
-                b->last = ngx_cpymem(b->last,  "      -",
-                                     sizeof("      -") - 1);
+                b->last = nfi_cpymem_ssz(b->last,  "      -");
 
             } else {
                 length = entry[i].size;
@@ -558,9 +553,19 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
 
     /* TODO: free temporary pool */
 
-    b->last = ngx_cpymem(b->last, "</pre><hr>", sizeof("</pre><hr>") - 1);
+    /* Output table bottom */
+    b->last = nfi_cpymem_ssz(b->last, t06_list2);
 
-    b->last = ngx_cpymem(b->last, t09_foot1, sizeof(t09_foot1) - 1);
+    /*
+     * Output body end, including readme if requested. The t07_body3 and
+     * t08_body4 templates may be empty, so use ngx_http_fancyindex_tcpy_if
+     * TODO: Output readme
+     */
+    b->last = nfi_cpymem_ssz(b->last, t07_body3);
+    b->last = nfi_cpymem_ssz(b->last, t08_body4);
+
+    /* Output page footer */
+    b->last = nfi_cpymem_ssz(b->last, t09_foot1);
 
     if (r == r->main) {
         b->last_buf = 1;
