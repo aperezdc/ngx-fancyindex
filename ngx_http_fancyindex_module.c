@@ -280,8 +280,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     }
 
     r->headers_out.status = NGX_HTTP_OK;
-    r->headers_out.content_type_len = sizeof("text/html") - 1;
-    r->headers_out.content_type.len = sizeof("text/html") - 1;
+    r->headers_out.content_type_len = nfi_sizeof_ssz("text/html");
     r->headers_out.content_type.data = (u_char *) "text/html";
 
     rc = ngx_http_send_header(r);
@@ -394,16 +393,26 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
 
     entry = entries.elts;
     for (i = 0; i < entries.nelts; i++) {
-        len += sizeof("<a href=\"") - 1
-            + entry[i].name.len + entry[i].escape
-            + 1                                          /* 1 is for "/" */
-            + sizeof("\">") - 1
-            + entry[i].name.len - entry[i].utf_len
-            + NGX_HTTP_FANCYINDEX_NAME_LEN + sizeof("&gt;") - 2
-            + sizeof("</a>") - 1
-            + sizeof(" 28-Sep-1970 12:00 ") - 1
-            + 20                                         /* the file size */
-            + 2;
+        /*
+         * Genearated table rows are as follows, unneeded whitespace
+         * is stripped out:
+         *
+         *   <tr class="X">
+         *     <td><a href="U">fname</a></td>
+         *     <td>size</td><td>date</td>
+         *   </tr>
+         */
+        len += nfi_sizeof_ssz("<tr class=\"X\"><td><a href=\"")
+            + entry[i].name.len + entry[i].escape /* Escaped URL */
+            + nfi_sizeof_ssz("\">")
+            + entry[i].name.len + entry[i].utf_len
+            + NGX_HTTP_FANCYINDEX_NAME_LEN + nfi_sizeof_ssz("&gt;")
+            + nfi_sizeof_ssz("</a></td><td>")
+            + 20 /* File size */
+            + nfi_sizeof_ssz("</td><td>")
+            + nfi_sizeof_ssz(" 28-Sep-1970 12:00 ")
+            + nfi_sizeof_ssz("</td></tr>\n")
+            ;
     }
 
     b = ngx_create_temp_buf(r->pool, len);
