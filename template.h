@@ -78,3 +78,14 @@ static const u_char t09_foot1[] = ""
 "</body>"
 "</html>"
 ;
+#define NFI_TEMPLATE_SIZE (0 \
+	+ nfi_sizeof_ssz(4) \
+	+ nfi_sizeof_ssz(5) \
+	+ nfi_sizeof_ssz(6) \
+	+ nfi_sizeof_ssz(7) \
+	+ nfi_sizeof_ssz(8) \
+	+ nfi_sizeof_ssz(0) \
+	+ nfi_sizeof_ssz(1) \
+	+ nfi_sizeof_ssz(2) \
+	+ nfi_sizeof_ssz(3) \
+	)

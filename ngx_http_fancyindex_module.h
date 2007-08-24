@@ -8,18 +8,11 @@
 #ifndef __ngx_http_fancyindex_module_h__
 #define __ngx_http_fancyindex_module_h__
 
+#define nfi_sizeof_ssz(_s)  (sizeof(_s) - 1)
+
+
 #include "template.h"
 
-#define NFI_TEMPLATE_SIZE \
-	( (sizeof(t01_head1) - 1) \
-	+ (sizeof(t02_head2) - 1) \
-	+ (sizeof(t03_body1) - 1) \
-	+ (sizeof(t04_body2) - 1) \
-	+ (sizeof(t05_list1) - 1) \
-	+ (sizeof(t06_list2) - 1) \
-	+ (sizeof(t07_body3) - 1) \
-	+ (sizeof(t08_body4) - 1) \
-	+ (sizeof(t09_foot1) - 1) )
 
 /**
  * Copy a static zero-terminated string. Useful to output template
