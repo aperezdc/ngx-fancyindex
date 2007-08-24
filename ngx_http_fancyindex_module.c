@@ -412,6 +412,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
             + nfi_sizeof_ssz("</td><td>")
             + nfi_sizeof_ssz(" 28-Sep-1970 12:00 ")
             + nfi_sizeof_ssz("</td></tr>\n")
+            + 2 /* CR LF */
             ;
     }
 
@@ -440,7 +441,14 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     tp = ngx_timeofday();
 
     for (i = 0; i < entries.nelts; i++) {
-        b->last = nfi_cpymem_ssz(b->last, "<a href=\"");
+        static const char _evenodd[] = { 'e', 'o' };
+        b->last = nfi_cpymem_ssz(b->last, "<tr class=\"");
+        *b->last++ = _evenodd[i & 0x01];
+        /*
+         * Alternative implementation:
+         *   *b->last++ = (i & 0x01) ? 'e' : 'o';
+         */
+        b->last = nfi_cpymem_ssz(b->last, "\"><a href=\"");
 
         if (entry[i].escape) {
             ngx_escape_uri(b->last, entry[i].name.data, entry[i].name.len,
@@ -449,8 +457,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
             b->last += entry[i].name.len + entry[i].escape;
 
         } else {
-            b->last = ngx_cpymem(b->last, entry[i].name.data,
-                                 entry[i].name.len);
+            b->last = nfi_cpymem_str(b->last, entry[i].name);
         }
 
         if (entry[i].dir) {
@@ -465,7 +472,6 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         if (entry[i].name.len - len) {
             if (len > NGX_HTTP_FANCYINDEX_NAME_LEN) {
                 copy = NGX_HTTP_FANCYINDEX_NAME_LEN - 3 + 1;
-
             } else {
                 copy = NGX_HTTP_FANCYINDEX_NAME_LEN + 1;
             }
@@ -480,7 +486,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         }
 
         if (len > NGX_HTTP_FANCYINDEX_NAME_LEN) {
-            b->last = ngx_cpymem(last, "..&gt;</a>", sizeof("..&gt;</a>") - 1);
+            b->last = nfi_cpymem_ssz(last, "..&gt;</a></td><td>");
 
         } else {
             if (entry[i].dir && NGX_HTTP_FANCYINDEX_NAME_LEN - len > 0) {
@@ -488,33 +494,19 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
                 len++;
             }
 
-            b->last = ngx_cpymem(b->last, "</a>", sizeof("</a>") - 1);
-            ngx_memset(b->last, ' ', NGX_HTTP_FANCYINDEX_NAME_LEN - len);
-            b->last += NGX_HTTP_FANCYINDEX_NAME_LEN - len;
+            b->last = nfi_cpymem_ssz(b->last, "</a></td><td>");
         }
-
-        *b->last++ = ' ';
-
-        ngx_gmtime(entry[i].mtime + tp->gmtoff * 60 * alcf->localtime, &tm);
-
-        b->last = ngx_sprintf(b->last, "%02d-%s-%d %02d:%02d ",
-                              tm.ngx_tm_mday,
-                              months[tm.ngx_tm_mon - 1],
-                              tm.ngx_tm_year,
-                              tm.ngx_tm_hour,
-                              tm.ngx_tm_min);
 
         if (alcf->exact_size) {
             if (entry[i].dir) {
-                b->last = nfi_cpymem_ssz(b->last, "                  -");
+                *b->last++ = '-';
             } else {
                 b->last = ngx_sprintf(b->last, "%19O", entry[i].size);
             }
 
         } else {
             if (entry[i].dir) {
-                b->last = nfi_cpymem_ssz(b->last,  "      -");
-
+                *b->last++ = '-';
             } else {
                 length = entry[i].size;
 
@@ -554,6 +546,16 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
                 }
             }
         }
+
+        ngx_gmtime(entry[i].mtime + tp->gmtoff * 60 * alcf->localtime, &tm);
+
+        b->last = ngx_sprintf(b->last, "</td><td>%02d-%s-%d %02d:%02d</td></tr>",
+                              tm.ngx_tm_mday,
+                              months[tm.ngx_tm_mon - 1],
+                              tm.ngx_tm_year,
+                              tm.ngx_tm_hour,
+                              tm.ngx_tm_min);
+
 
         *b->last++ = CR;
         *b->last++ = LF;
