@@ -5,38 +5,47 @@
 .. contents::
 
 
-How to modify templates
-=======================
+How to modify the template
+==========================
 
-Templates are in the ``templates/`` subdirectory of the source distribution.
-They are included both as regular HTML text snippets (files ending in ``.t``)
-and ready for inclusion in a C program (files ending in ``.inc``). Also
-there is a small C program
+The template is in the ``template.html`` file. Note that comment markers are
+used to control how the ``split-template`` Awk script generates the C header
+which gets ultimately included in the compiled object code. Comment markers
+have the ``<!-- var identifier -->`` format. Here ``identifier`` must be
+a valid C identifier. All the text following the marker until the next
+marker will be flattened into a C string.
+
+Regenerating the C header
+~~~~~~~~~~~~~~~~~~~~~~~~~
+You will need Awk. I hope any decent implementation will do, but the GNU one
+is known to work flawlessly. Just do::
+
+  $ awk -f template.awk template.html > template.h
 
 
-Template order
-~~~~~~~~~~~~~~
-01-head1
+Template identifier order
+~~~~~~~~~~~~~~~~~~~~~~~~~
+t01_head1
   Outputs the HTML header and must end with something like
   ``<title>Index of``, because the code inserts the path of the URI just
   after this piece.
-02-head2
+t02_head2
   Outputs the rest of the header, usually will close the ``</title>`` tag
   opened in the previous template and add further output until the closing
   ``</head>`` tag.
-03-body1
+t03_body1
   -
-04-body2
+t04_body2
   -
-05-list1
+t05_list1
   -
-06-list2
+t06_list2
   -
-07-body3
+t07_body3
   -
-08-body4
+t08_body4
   -
-09-foot1
+t09_foot1
   -
 
 

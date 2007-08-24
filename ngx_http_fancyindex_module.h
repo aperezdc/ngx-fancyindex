@@ -1,34 +1,14 @@
+/*
+ * ngx_http_fancyindex_module.h
+ * Copyright © 2007 Adrian Perez <adrianperez@udc.es>
+ *
+ * Distributed under terms of the BSD license.
+ */
 
-#ifndef __templates_inc__
-#define __templates_inc__
+#ifndef __ngx_http_fancyindex_module_h__
+#define __ngx_http_fancyindex_module_h__
 
-static const u_char t01_head1[] =
-#include "01-head1.inc"
-;
-static const u_char t02_head2[] =
-#include "02-head2.inc"
-;
-static const u_char t03_body1[] =
-#include "03-body1.inc"
-;
-static const u_char t04_body2[] =
-#include "04-body2.inc"
-;
-static const u_char t05_list1[] =
-#include "05-list1.inc"
-;
-static const u_char t06_list2[] =
-#include "06-list2.inc"
-;
-static const u_char t07_body3[] =
-#include "07-body3.inc"
-;
-static const u_char t08_body4[] =
-#include "08-body4.inc"
-;
-static const u_char t09_foot1[] =
-#include "09-foot1.inc"
-;
+#include "template.h"
 
 #define NFI_TEMPLATE_SIZE \
 	( (sizeof(t01_head1) - 1) \
@@ -61,6 +41,6 @@ static const u_char t09_foot1[] =
 #define nfi_maybe_cpymem_ssz(__p, __t) \
 	if ((__t)[0] != '\0') nfi_cpymem_ssz((__p), (__t))
 
-#endif /* !__templates_inc__ */
+#endif /* !__ngx_http_fancyindex_module_h__ */
 /* vim:ft=c
  */
