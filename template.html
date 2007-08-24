@@ -3,33 +3,52 @@
 		"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 		<style type="text/css">
-			body, html {
-				background: #fff;
+			body,html {
+				background:#fff;
 			}
 			tr.o {
-				background: #eee;
+				background:#f4f4f4;
+			}
+			th,td {
+				padding:0.1em 0.5em;
 			}
 			th {
-				font-weight: bold;
-				background: #ddd;
+				text-align:left;
+				font-weight:bold;
+				background:#eee;
+				border-bottom:1px solid #aaa;
+			}
+			#list {
+				border:1px solid #aaa;
+				width:100%;
+			}
+			a {
+				color:#a33;
+			}
+			a:hover {
+				color:#e33;
 			}
 		</style>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 		<title>Index of 
+<!-- var NONE -->
+			/path/to/somewhere
 <!-- var t02_head2 -->
 		</title>
 	</head>
 <!-- var t03_body1 -->
 	<body>
-		<h1>
+		<h1>Index of 
+<!-- var NONE -->
+			/path/to/somewhere
 <!-- var t04_body2 -->
 		</h1>
 <!-- var t05_list1 -->
-		<table>
+		<table id="list" cellpadding="0.1em" cellspacing="0">
 			<colgroup>
 				<col width="55%"/>
-				<col width="20%" style="text-align: right"/>
+				<col width="20%"/>
 				<col width="25%"/>
 			</colgroup>
 			<thead>
@@ -40,8 +59,26 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr>
-					<td colspan="3"><a href="../">Parent Directory</a></td>
+				<tr class="e">
+					<td><a href="../">Parent Directory</a></td>
+					<td>-</td>
+					<td>-</td>
+				</tr>
+<!-- var NONE -->
+				<tr class="o">
+					<td>test file 1</td>
+					<td>123kB</td>
+					<td>date</td>
+				</tr>
+				<tr class="e">
+					<td>test file 2</td>
+					<td>321MB</td>
+					<td>date</td>
+				</tr>
+				<tr class="o">
+					<td>test file 3</td>
+					<td>666</td>
+					<td>date</td>
 				</tr>
 <!-- var t06_list2 -->
 			</tbody>

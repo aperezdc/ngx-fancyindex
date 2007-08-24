@@ -14,6 +14,10 @@ BEGIN {
 
 /^<!--[[:space:]]*var[[:space:]]+[^[:space:]]+[[:space:]]*-->$/ {
 	if (varname) print ";";
+	if ($3 == "NONE") {
+		varname = 0;
+		next;
+	}
 	varname = $3;
 	print "static const u_char " varname "[] = \"\"";
 	next;
