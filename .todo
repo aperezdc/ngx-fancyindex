@@ -1,6 +1,9 @@
 <todo version="0.1.19">
-    <note priority="medium" time="1187975642">
+    <note priority="medium" time="1187975642" done="1188304701">
         readme:iframe
+        <comment>
+            done in r23
+        </comment>
     </note>
     <note priority="medium" time="1187975645">
         readme:div
