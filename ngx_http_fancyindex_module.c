@@ -36,13 +36,6 @@ typedef struct {
 
 #endif
 
-#define NGX_HTTP_FANCYINDEX_README_TOP    0x00
-#define NGX_HTTP_FANCYINDEX_README_PRE    0x00
-#define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
-#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x02
-#define NGX_HTTP_FANCYINDEX_README_DIV    0x04
-#define NGX_HTTP_FANCYINDEX_README_IFRAME 0x08
-
 
 typedef struct {
     ngx_str_t      name;
@@ -54,22 +47,45 @@ typedef struct {
 } ngx_http_fancyindex_entry_t;
 
 
+#define NGX_HTTP_FANCYINDEX_README_TOP    0x00
+#define NGX_HTTP_FANCYINDEX_README_PRE    0x00
+#define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
+#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x02
+#define NGX_HTTP_FANCYINDEX_README_DIV    0x04
+#define NGX_HTTP_FANCYINDEX_README_IFRAME 0x08
+
+
+typedef enum {
+    NGX_HTTP_FANCYINDEX_INCLUDE_STATIC, /* Cache file contents on first request */
+    NGX_HTTP_FANCYINDEX_INCLUDE_CACHED, /* Cache file contents on first request,
+                                           and re-read if needed afterwards */
+} ngx_http_fancyindex_include_mode_t;
+
+
 typedef struct {
-    ngx_flag_t     enable;
-    ngx_flag_t     localtime;
-    ngx_flag_t     exact_size;
+    ngx_flag_t enable;
+    ngx_flag_t localtime;
+    ngx_flag_t exact_size;
 
-    ngx_str_t      header;
-    ngx_str_t      footer;
-    ngx_str_t      readme;
+    ngx_str_t  header;
+    ngx_str_t  footer;
+    ngx_str_t  readme;
 
-    ngx_uint_t     readme_flags;
+    ngx_uint_t readme_flags;
+
+    ngx_http_fancyindex_include_mode_t include_mode;
 } ngx_http_fancyindex_loc_conf_t;
+
+
+#define nfi_conf_path_set(_c, _n)  ((_c)->((_n).len) > 0)
 
 
 #define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
 #define NGX_HTTP_FANCYINDEX_NAME_LEN     50
 
+
+static ngx_inline ngx_str_t
+    nfi_get_readme_path(ngx_http_request_t *r, const ngx_str_t *last);
 
 static int ngx_libc_cdecl ngx_http_fancyindex_cmp_entries(const void *one,
     const void *two);
@@ -82,7 +98,7 @@ static char *ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf,
 
 
 
-static ngx_conf_bitmask_t ngx_http_fancyindex_readme_flags[] = {
+static const ngx_conf_bitmask_t ngx_http_fancyindex_readme_flags[] = {
     { ngx_string("pre"),    NGX_HTTP_FANCYINDEX_README_PRE    },
     { ngx_string("asis"),   NGX_HTTP_FANCYINDEX_README_ASIS   },
     { ngx_string("top"),    NGX_HTTP_FANCYINDEX_README_TOP    },
@@ -90,6 +106,14 @@ static ngx_conf_bitmask_t ngx_http_fancyindex_readme_flags[] = {
     { ngx_string("div"),    NGX_HTTP_FANCYINDEX_README_DIV    },
     { ngx_string("iframe"), NGX_HTTP_FANCYINDEX_README_IFRAME },
     { ngx_null_string,      0                                 },
+};
+
+
+
+static const ngx_conf_enum_t ngx_http_fancyindex_include_modes[] = {
+    { ngx_string("static"), NGX_HTTP_FANCYINDEX_INCLUDE_STATIC },
+    { ngx_string("cached"), NGX_HTTP_FANCYINDEX_INCLUDE_CACHED },
+    { ngx_null_string,      0                                  },
 };
 
 
@@ -144,6 +168,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       offsetof(ngx_http_fancyindex_loc_conf_t, readme_flags),
       &ngx_http_fancyindex_readme_flags },
 
+    { ngx_string("fancyindex_mode"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_enum_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, include_mode),
+      &ngx_http_fancyindex_include_modes },
+
       ngx_null_command
 };
 
@@ -192,6 +223,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     ngx_buf_t                      *b;
     ngx_int_t                       rc, size;
     ngx_str_t                       path;
+    ngx_str_t                       readme_path;
     ngx_dir_t                       dir;
     ngx_uint_t                      i, level;
     ngx_pool_t                     *pool;
@@ -264,11 +296,9 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     }
 
 #if (NGX_SUPPRESS_WARN)
-
     /* MSVC thinks 'entries' may be used without having been initialized */
     ngx_memzero(&entries, sizeof(ngx_array_t));
-
-#endif
+#endif /* NGX_SUPPRESS_WARN */
 
     /* TODO: pool should be temporary pool */
     pool = r->pool;
@@ -391,6 +421,29 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
           + r->uri.len /* HTML head and as an <h1> in the HTML body    */
           ;
 
+    /*
+     * If including an <iframe> for the readme file, add the length of the
+     * URI, plus the length of the readme file name and the length of the
+     * needed markup.
+     */
+    readme_path = nfi_get_readme_path(r, &path);
+    if (readme_path.len == 0) goto skip_readme_len;
+
+    if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME)) {
+        len += 3 /* CR+LF+'/' */
+            + nfi_sizeof_ssz("<iframe id=\"readme\" src=\"")
+            + r->uri.len + alcf->readme.len
+            + nfi_sizeof_ssz("\">(readme file)</iframe>")
+            ;
+    }
+    else {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "fancyindex: bad readme_flags combination %#x",
+                alcf->readme_flags);
+    }
+
+
+skip_readme_len:
     entry = entries.elts;
     for (i = 0; i < entries.nelts; i++) {
         /*
@@ -434,6 +487,32 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     b->last = nfi_cpymem_ssz(b->last, t03_body1);
     b->last = nfi_cpymem_str(b->last, r->uri);
     b->last = nfi_cpymem_ssz(b->last, t04_body2);
+
+    /* Insert readme at top, if appropriate */
+    if ((readme_path.len == 0) ||
+            !nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_TOP))
+        goto skip_readme_top;
+
+#define nfi_add_readme_iframe( ) \
+        do { \
+            b->last = nfi_cpymem_ssz(b->last, "<iframe id=\"readme\" src=\""); \
+            b->last = nfi_cpymem_str(b->last, r->uri); \
+            *b->last++ = '/'; \
+            b->last = nfi_cpymem_str(b->last, alcf->readme); \
+            b->last = nfi_cpymem_ssz(b->last, "\">(readme file)</iframe>"); \
+            *b->last++ = CR; \
+            *b->last++ = LF; \
+        } while (0)
+
+    if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME))
+        nfi_add_readme_iframe();
+    else {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "fancyindex: bad readme_flags combination %#x",
+                alcf->readme_flags);
+    }
+
+skip_readme_top:
 
     /* Output table header */
     b->last = nfi_cpymem_ssz(b->last, t05_list1);
@@ -572,6 +651,21 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
      * TODO: Output readme
      */
     b->last = nfi_cpymem_ssz(b->last, t07_body3);
+
+    /* Insert readme at bottom, if appropriate */
+    if ((readme_path.len == 0) ||
+            !nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_BOTTOM))
+        goto skip_readme_bottom;
+
+    if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME))
+        nfi_add_readme_iframe();
+    else {
+        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                "fancyindex: bad readme_flags combination %#x",
+                alcf->readme_flags);
+    }
+
+skip_readme_bottom:
     b->last = nfi_cpymem_ssz(b->last, t08_body4);
 
     /* Output page footer */
@@ -648,6 +742,32 @@ ngx_http_fancyindex_alloc(ngx_http_fancyindex_ctx_t *ctx, size_t size)
 #endif
 
 
+static ngx_inline ngx_str_t
+nfi_get_readme_path(ngx_http_request_t *r, const ngx_str_t *path)
+{
+    u_char *last;
+    ngx_file_info_t info;
+    ngx_str_t fullpath = ngx_null_string;
+    ngx_http_fancyindex_loc_conf_t *alcf =
+        ngx_http_get_module_loc_conf(r, ngx_http_fancyindex_module);
+
+    if (alcf->readme.len == 0) /* Readme files are disabled */
+        return fullpath;
+
+    fullpath.len  = path->len + 2 + alcf->readme.len;
+    fullpath.data = ngx_palloc(r->pool, fullpath.len);
+
+    last = nfi_cpymem_str(fullpath.data, *path); *last++ = '/';
+    last = nfi_cpymem_str(last, alcf->readme); *last++ = '\0';
+
+    /* File does not exists, or cannot be accessed */
+    if (ngx_file_info(fullpath.data, &info) != 0)
+        fullpath.len = 0;
+
+    return fullpath;
+}
+
+
 static ngx_int_t
 ngx_http_fancyindex_error(ngx_http_request_t *r, ngx_dir_t *dir, ngx_str_t *name)
 {
@@ -683,6 +803,7 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
     conf->localtime = NGX_CONF_UNSET;
     conf->exact_size = NGX_CONF_UNSET;
     conf->readme_flags = NGX_CONF_UNSET;
+    conf->include_mode = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -697,6 +818,8 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->enable, prev->enable, 0);
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
+    ngx_conf_merge_uint_value(conf->include_mode, prev->include_mode,
+            NGX_HTTP_FANCYINDEX_INCLUDE_STATIC);
 
     ngx_conf_merge_str_value(conf->header, prev->header, "");
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");

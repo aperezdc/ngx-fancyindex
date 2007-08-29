@@ -34,6 +34,9 @@
 #define nfi_maybe_cpymem_ssz(__p, __t) \
 	if ((__t)[0] != '\0') nfi_cpymem_ssz((__p), (__t))
 
+#define nfi_has_flag(_where, _what) \
+	(((_where) & (_what)) == (_what))
+
 #endif /* !__ngx_http_fancyindex_module_h__ */
 /* vim:ft=c
  */
