@@ -49,23 +49,6 @@ typedef struct {
 } ngx_http_fancyindex_entry_t;
 
 
-#define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
-#define NGX_HTTP_FANCYINDEX_README_TOP    0x02
-#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x04
-#define NGX_HTTP_FANCYINDEX_README_DIV    0x08
-#define NGX_HTTP_FANCYINDEX_README_IFRAME 0x10
-#define NGX_HTTP_FANCYINDEX_README_PRE    0x20
-
-/*
- * NGX_HTTP_FANCYINDEX_INCLUDE_STATIC
- *    Cache file contents on first request
- * NGX_HTTP_FANCYINDEX_INCLUDE_CACHED
- *    Cache file contents on first request,
- *    and re-read if needed afterwards
- */
-#define NGX_HTTP_FANCYINDEX_INCLUDE_STATIC  0
-#define NGX_HTTP_FANCYINDEX_INCLUDE_CACHED  1
-
 
 typedef struct {
     ngx_flag_t enable;
@@ -81,9 +64,6 @@ typedef struct {
 } ngx_http_fancyindex_loc_conf_t;
 
 
-
-#define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
-#define NGX_HTTP_FANCYINDEX_NAME_LEN     50
 
 
 static ngx_inline ngx_str_t

@@ -8,6 +8,26 @@
 #ifndef __ngx_http_fancyindex_module_h__
 #define __ngx_http_fancyindex_module_h__
 
+
+#define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
+#define NGX_HTTP_FANCYINDEX_README_TOP    0x02
+#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x04
+#define NGX_HTTP_FANCYINDEX_README_DIV    0x08
+#define NGX_HTTP_FANCYINDEX_README_IFRAME 0x10
+#define NGX_HTTP_FANCYINDEX_README_PRE    0x20
+
+
+/*
+ * NGX_HTTP_FANCYINDEX_INCLUDE_STATIC
+ *    Cache file contents on first request
+ * NGX_HTTP_FANCYINDEX_INCLUDE_CACHED
+ *    Cache file contents on first request,
+ *    and re-read if needed afterwards
+ */
+#define NGX_HTTP_FANCYINDEX_INCLUDE_STATIC  0
+#define NGX_HTTP_FANCYINDEX_INCLUDE_CACHED  1
+
+
 #define nfi_sizeof_ssz(_s)  (sizeof(_s) - 1)
 
 
@@ -19,6 +39,11 @@
 #define NFI_BUILTIN_FOOT_SIZE ( \
 		nfi_sizeof_ssz(t08_body4) + \
 		nfi_sizeof_ssz(t09_foot1) )
+
+
+#define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
+#define NGX_HTTP_FANCYINDEX_NAME_LEN     50
+
 
 /**
  * Copy a static zero-terminated string. Useful to output template
