@@ -11,8 +11,14 @@
 #define nfi_sizeof_ssz(_s)  (sizeof(_s) - 1)
 
 
-#include "template.h"
+#define NFI_BUILTIN_HEAD_SIZE ( \
+		nfi_sizeof_ssz(t01_head1) + \
+		nfi_sizeof_ssz(t02_head2) + \
+		nfi_sizeof_ssz(t03_body1) )
 
+#define NFI_BUILTIN_FOOT_SIZE ( \
+		nfi_sizeof_ssz(t08_body4) + \
+		nfi_sizeof_ssz(t09_foot1) )
 
 /**
  * Copy a static zero-terminated string. Useful to output template

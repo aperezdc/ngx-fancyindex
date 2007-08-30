@@ -23,6 +23,8 @@
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include "ngx_http_fancyindex_module.h"
+#include "template.h"
+
 
 #if 0
 
