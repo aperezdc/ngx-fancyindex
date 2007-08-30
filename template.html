@@ -9,6 +9,8 @@
 
 			body,html {
 				background:#fff;
+				font-family:"Bitstream Vera Sans","Lucida Grande",
+					"Lucida Sans Unicode",Lucidux,Verdana,Lucida,sans-serif;
 			}
 			tr.e {
 				background:#f4f4f4;
@@ -32,8 +34,24 @@
 			a:hover {
 				color:#e33;
 			}
+			#readme {
+				padding:0;
+				margin:1em 0;
+				border:none;
+				width:100%;
+			}
 
 		</style>
+
+		<script type="text/javascript">
+			function ngx_onload(){
+				var f=document.getElementById('readme');
+				if(!(f&&f.contentDocument))return;
+				f.style.height=f.contentDocument.body.offsetHeight+'px';
+				f.contentDocument.body.style.padding='0';
+				f.contentDocument.body.style.margin='0';
+			}
+		</script>
 
 		<title>Index of 
 <!-- var NONE -->
@@ -43,7 +61,7 @@
 
 	</head>
 <!-- var t03_body1 -->
-	<body>
+	<body onload="ngx_onload()">
 
 		<h1>Index of 
 <!-- var NONE -->

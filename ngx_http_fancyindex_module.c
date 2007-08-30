@@ -47,12 +47,12 @@ typedef struct {
 } ngx_http_fancyindex_entry_t;
 
 
-#define NGX_HTTP_FANCYINDEX_README_TOP    0x00
-#define NGX_HTTP_FANCYINDEX_README_PRE    0x00
 #define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
-#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x02
-#define NGX_HTTP_FANCYINDEX_README_DIV    0x04
-#define NGX_HTTP_FANCYINDEX_README_IFRAME 0x08
+#define NGX_HTTP_FANCYINDEX_README_TOP    0x02
+#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x04
+#define NGX_HTTP_FANCYINDEX_README_DIV    0x08
+#define NGX_HTTP_FANCYINDEX_README_IFRAME 0x10
+#define NGX_HTTP_FANCYINDEX_README_PRE    0x20
 
 /*
  * NGX_HTTP_FANCYINDEX_INCLUDE_STATIC
@@ -78,8 +78,6 @@ typedef struct {
     ngx_uint_t include_mode;
 } ngx_http_fancyindex_loc_conf_t;
 
-
-#define nfi_conf_path_set(_c, _n)  ((_c)->((_n).len) > 0)
 
 
 #define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
@@ -163,14 +161,14 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       offsetof(ngx_http_fancyindex_loc_conf_t, readme),
       NULL },
 
-    { ngx_string("fancyindex_readme_options"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+    { ngx_string("fancyindex_readme_mode"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_conf_set_bitmask_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, readme_flags),
       &ngx_http_fancyindex_readme_flags },
 
-    { ngx_string("fancyindex_mode"),
+    { ngx_string("fancyindex_include_mode"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_enum_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
@@ -650,12 +648,12 @@ skip_readme_top:
     /*
      * Output body end, including readme if requested. The t07_body3 and
      * t08_body4 templates may be empty, so use ngx_http_fancyindex_tcpy_if
-     * TODO: Output readme
      */
     b->last = nfi_cpymem_ssz(b->last, t07_body3);
 
     /* Insert readme at bottom, if appropriate */
     if ((readme_path.len == 0) ||
+            nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_TOP) ||
             !nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_BOTTOM))
         goto skip_readme_bottom;
 
@@ -794,17 +792,17 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
 
     /*
      * Set by ngx_pcalloc:
-     *    conf->header.len  = 0
-     *    conf->header.data = NULL
-     *    conf->footer.len  = 0
-     *    conf->footer.data = NULL
-     *    conf->readme.len  = 0
-     *    conf->readme.data = NULL
+     *    conf->header.len   = 0
+     *    conf->header.data  = NULL
+     *    conf->footer.len   = 0
+     *    conf->footer.data  = NULL
+     *    conf->readme.len   = 0
+     *    conf->readme.data  = NULL
+     *    conf->readme_flags = 0
      */
     conf->enable = NGX_CONF_UNSET;
     conf->localtime = NGX_CONF_UNSET;
     conf->exact_size = NGX_CONF_UNSET;
-    conf->readme_flags = NGX_CONF_UNSET;
     conf->include_mode = NGX_CONF_UNSET;
 
     return conf;
@@ -828,7 +826,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_str_value(conf->readme, prev->readme, "");
 
     ngx_conf_merge_bitmask_value(conf->readme_flags, prev->readme_flags,
-            (NGX_HTTP_FANCYINDEX_README_TOP | NGX_HTTP_FANCYINDEX_README_PRE));
+            NGX_HTTP_FANCYINDEX_README_TOP);
 
     return NGX_CONF_OK;
 }

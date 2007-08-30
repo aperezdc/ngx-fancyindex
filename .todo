@@ -26,4 +26,7 @@
     <note priority="medium" time="1188384488">
         split big handler function into smaller pieces
     </note>
+    <note priority="medium" time="1188484132">
+        install handler *after* index handler
+    </note>
 </todo>
