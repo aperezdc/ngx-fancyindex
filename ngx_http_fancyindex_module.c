@@ -54,12 +54,15 @@ typedef struct {
 #define NGX_HTTP_FANCYINDEX_README_DIV    0x04
 #define NGX_HTTP_FANCYINDEX_README_IFRAME 0x08
 
-
-typedef enum {
-    NGX_HTTP_FANCYINDEX_INCLUDE_STATIC, /* Cache file contents on first request */
-    NGX_HTTP_FANCYINDEX_INCLUDE_CACHED, /* Cache file contents on first request,
-                                           and re-read if needed afterwards */
-} ngx_http_fancyindex_include_mode_t;
+/*
+ * NGX_HTTP_FANCYINDEX_INCLUDE_STATIC
+ *    Cache file contents on first request
+ * NGX_HTTP_FANCYINDEX_INCLUDE_CACHED
+ *    Cache file contents on first request,
+ *    and re-read if needed afterwards
+ */
+#define NGX_HTTP_FANCYINDEX_INCLUDE_STATIC  0
+#define NGX_HTTP_FANCYINDEX_INCLUDE_CACHED  1
 
 
 typedef struct {
@@ -72,8 +75,7 @@ typedef struct {
     ngx_str_t  readme;
 
     ngx_uint_t readme_flags;
-
-    ngx_http_fancyindex_include_mode_t include_mode;
+    ngx_uint_t include_mode;
 } ngx_http_fancyindex_loc_conf_t;
 
 
