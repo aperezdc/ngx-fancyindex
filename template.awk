@@ -25,6 +25,12 @@ BEGIN {
 	next;
 }
 
+/^$/ {
+	if (!varname) next;
+	print "\"\\n\"";
+	next;
+}
+
 {
 	if (!varname) next;
 	# Order matters
@@ -39,7 +45,7 @@ END {
 	if (varname) print ";";
 	print "#define NFI_TEMPLATE_SIZE (0 \\";
 	for (var in vars) {
-		print "\t+ nfi_sizeof_ssz(" var ") \\";
+		print "\t+ nfi_sizeof_ssz(" vars[var] ") \\";
 	}
 	print "\t)"
 }

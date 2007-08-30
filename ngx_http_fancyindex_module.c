@@ -529,7 +529,7 @@ skip_readme_top:
          * Alternative implementation:
          *   *b->last++ = (i & 0x01) ? 'e' : 'o';
          */
-        b->last = nfi_cpymem_ssz(b->last, "\"><a href=\"");
+        b->last = nfi_cpymem_ssz(b->last, "\"><td><a href=\"");
 
         if (entry[i].escape) {
             ngx_escape_uri(b->last, entry[i].name.data, entry[i].name.len,
