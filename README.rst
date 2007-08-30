@@ -100,11 +100,11 @@ fancyindex_readme
   `fancyindex_readme_options`_ in order to learn more about how the readme
   file may be included.
 
-fancyindex_readme_options
-~~~~~~~~~~~~~~~~~~~~~~~~~
+fancyindex_readme_mode
+~~~~~~~~~~~~~~~~~~~~~~
 :Syntax:
-  *fancyindex_readme_options* *pre* | *asis* | *top* | *bottom* | *div* ...
-:Default: fancyindex_readme_options top pre
+  *fancyindex_readme_mode* *pre* | *asis* | *top* | *bottom* | *div* ...
+:Default: fancyindex_readme_mode top
 :Context: http, server, location
 :Description:
   Controls how to include the readme file specified by `fancyindex_readme`_.
@@ -130,9 +130,9 @@ fancyindex_readme_options
       will instruct the client to perform an additional request in order to
       fetch the contents of the frame.
 
-fancyindex_mode
-:Syntax: *fancyindex_mode* *static* | *cached* 
-:Default: *fancyindex_mode static*
+fancyindex_include_mode
+:Syntax: *fancyindex_include_mode* *static* | *cached* 
+:Default: *fancyindex_include_mode static*
 :Context: http, server, location
 :Description:
   Controls how to include the header and footer specified by
