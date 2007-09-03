@@ -68,6 +68,13 @@
 #define nfi_has_flag(_where, _what) \
 	(((_where) & (_what)) == (_what))
 
+
+/*
+ * Internal module functions.
+ */
+void nfi_inliner_init(void);
+
+
 #endif /* !__ngx_http_fancyindex_module_h__ */
 /* vim:ft=c
  */
