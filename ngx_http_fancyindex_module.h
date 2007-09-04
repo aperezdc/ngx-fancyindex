@@ -8,6 +8,9 @@
 #ifndef __ngx_http_fancyindex_module_h__
 #define __ngx_http_fancyindex_module_h__
 
+#include <ngx_config.h>
+#include <ngx_core.h>
+
 
 #define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
 #define NGX_HTTP_FANCYINDEX_README_TOP    0x02
@@ -69,10 +72,16 @@
 	(((_where) & (_what)) == (_what))
 
 
-/*
- * Internal module functions.
+#include <ngx_http.h>
+
+/**
+ * Get a buffer out of a file name. The buffer will be ready to add to
+ * a processing chain (an ngx_chain_t). The "mode" determines how the file
+ * will be searched for, it ca be either NGX_HTTP_FANCYINDEX_INCLUDE_STATIC
+ * or NGX_HTTP_FANCYINDEX_INCLUDE_CACHED.
  */
-void nfi_inliner_init(void);
+ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *req,
+		const ngx_str_t const * path, ngx_int_t mode);
 
 
 #endif /* !__ngx_http_fancyindex_module_h__ */
