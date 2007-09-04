@@ -23,8 +23,8 @@
 #define NGX_DICT_HASHN(_k, _s, _n) (ngx_dict_hashnstr(_k, _n) % ((_s) - 1))
 #endif /* !NGX_DICT_HASHN */
 
-#ifndef NFI_DICT_KEY_EQ
-#define NFI_DICT_KEY_EQ(_a, _b) (ngx_dict_streq((_a), (_b)))
+#ifndef NGX_DICT_KEY_EQ
+#define NGX_DICT_KEY_EQ(_a, _b) (ngx_dict_streq((_a), (_b)))
 #endif /* !NGX_DICT_KEY_EQ */
 
 #ifndef NGX_DICT_KEY_EQN
@@ -32,32 +32,6 @@
 #endif /* !NGX_DICT_KEY_EQN */
 
 #include "ngx_dict.h"
-
-
-typedef struct ngx_dict_node ngx_dict_node_t;
-
-
-/*
- * XXX  Never, NEVER, change the layout of this struct. If  XXX
- * XXX  you want to add new fields, ADD FIELDS AT THE END.  XXX
- */
-
-struct ngx_dict_node
-{
-	void            *val;
-	ngx_str_t        key;
-	ngx_dict_node_t *next;
-	ngx_dict_node_t *nextNode;
-	ngx_dict_node_t *prevNode;
-};
-
-struct ngx_dict
-{
-	ngx_dict_node_t **nodes;
-	ngx_dict_node_t *first;
-	unsigned         count;
-	unsigned         size;
-};
 
 
 static ngx_slab_pool_t s_node_slab;
@@ -122,8 +96,9 @@ int
 ngx_dict_init(ngx_pool_t *pool, ngx_dict_t *d)
 {
 	d->size  = NGX_DICT_DEFAULT_SIZE;
-	/* TODO: Allocate this one... from where? */
+	/* TODO: Allocate this one... from where?
 	d->nodes = w_alloc(w_dict_node_t*, d->size);
+	*/
 	return 1;
 }
 
@@ -139,25 +114,11 @@ ngx_dict_free(ngx_dict_t *d)
 }
 
 
-unsigned
-ngx_dict_count(const ngx_dict_t *d)
-{
-	return d->count;
-}
-
-
 void
 ngx_dict_clear(ngx_dict_t *d)
 {
 	_ngx_dict_free_nodes(d);
 	memset(d->nodes, 0x00, d->size * sizeof(ngx_dict_node_t*));
-}
-
-
-void*
-ngx_dict_get(const ngx_dict_t *d, const ngx_str_t *key)
-{
-	return ngx_dict_getn(d, key, key->len);
 }
 
 
@@ -171,14 +132,14 @@ ngx_dict_getn(const ngx_dict_t *d, const ngx_str_t *key, size_t len)
 	node = d->nodes[hval];
 
 	if (node) {
-		if (NGX_DICT_KEY_EQN(node->key, key, len)) {
+		if (NGX_DICT_KEY_EQN(&node->key, key, len)) {
 			return node->val;
 		}
 		else {
 			ngx_dict_node_t *lastNode = node;
 			node = node->next;
 			while (node) {
-				if (NGX_DICT_KEY_EQN(node->key, key, len)) {
+				if (NGX_DICT_KEY_EQN(&node->key, key, len)) {
 					lastNode->next = node->next;
 					node->next = d->nodes[hval];
 					d->nodes[hval] = node;
@@ -194,7 +155,7 @@ ngx_dict_getn(const ngx_dict_t *d, const ngx_str_t *key, size_t len)
 
 
 static inline void
-_ngx_dict_rehash(w_dict_t *d)
+_ngx_dict_rehash(ngx_dict_t *d)
 {
 	ngx_dict_node_t *node = d->first;
 
@@ -210,7 +171,7 @@ _ngx_dict_rehash(w_dict_t *d)
 	memset(d->nodes, 0x00, d->size * sizeof(ngx_dict_node_t*));
 
 	for (node = d->first; node; node = node->nextNode) {
-		unsigned hval = NGX_DICT_HASH(node->key, d->size);
+		unsigned hval = NGX_DICT_HASH(&node->key, d->size);
 		ngx_dict_node_t *n = d->nodes[hval];
 		if (!n) d->nodes[hval] = node;
 		else {
@@ -225,12 +186,6 @@ _ngx_dict_rehash(w_dict_t *d)
 }
 
 
-void
-ngx_dict_set(ngx_dict_t *d, const char *key, void *val)
-{
-	ngx_dict_setn(d, key, key->len, val);
-}
-
 
 void
 ngx_dict_setn(ngx_dict_t *d, const ngx_str_t *key, size_t len, void *val)
@@ -242,7 +197,7 @@ ngx_dict_setn(ngx_dict_t *d, const ngx_str_t *key, size_t len, void *val)
 	node = d->nodes[hval];
 
 	while (node) {
-		if (NGX_DICT_KEY_EQN(node->key, key, len)) {
+		if (NGX_DICT_KEY_EQN(&node->key, key, len)) {
 			node->val = val;
 			return;
 		}
@@ -274,7 +229,7 @@ ngx_dict_del(ngx_dict_t *d, const ngx_str_t *key)
 	hval = NGX_DICT_HASH(key, d->size);
 
 	for (node = d->nodes[hval]; node; node = node->next) {
-		if (NGX_DICT_KEY_EQ(node->key, key)) {
+		if (NGX_DICT_KEY_EQ(&node->key, key)) {
 			ngx_dict_node_t *prevNode = node->prevNode;
 			ngx_dict_node_t *nextNode = node->nextNode;
 
@@ -285,7 +240,7 @@ ngx_dict_del(ngx_dict_t *d, const ngx_str_t *key)
 			if (lastNode) lastNode->next = node->next;
 			else d->nodes[hval] = node->next;
 
-			_w_dict_node_free(node);
+			_ngx_dict_node_free(node);
 			d->count--;
 			return;
 		}
@@ -293,58 +248,32 @@ ngx_dict_del(ngx_dict_t *d, const ngx_str_t *key)
 }
 
 
-ngx_dict_iterator_t
-ngx_dict_first(const ngx_dict_t *d)
+void
+ngx_dict_traverse_nodes(const ngx_dict_t *d, ngx_dict_traverse_fun_t f, void *ctx)
 {
-	return (ngx_dict_iterator_t) d->first;
-}
+	ngx_dict_node_t *n;
 
-
-ngx_dict_iterator_t
-ngx_dict_next(const ngx_dict_t *d, ngx_dict_iterator_t i)
-{
-	ngx_dict_node_t *node = (ngx_dict_node_t*) i;
-
-	(void) d; /* Avoid compiler warnings. */
-
-	return (ngx_dict_iterator_t) node->nextNode;
-}
-
-
-const ngx_str_t const*
-ngx_dict_iterator_get_key(ngx_dict_iterator_t i)
-{
-	ngx_dict_node_t *node = (ngx_dict_node_t*) i;
-	return node->key;
+	for (n = ngx_dict_first_node(d); n != NULL; n = ngx_dict_next_node(n))
+		(*f)(n, ctx);
 }
 
 
 void
-ngx_dict_traverse(ngx_dict_t *d, ngx_dict_traverse_fun_t f, void *ctx)
+ngx_dict_traverse_keys(const ngx_dict_t *d, ngx_dict_traverse_fun_t f, void *ctx)
 {
-	ngx_dict_iterator_t i;
+	ngx_dict_node_t *n;
 
-	for (i = ngx_dict_first(d); i != NULL; i = ngx_dict_next(d, i))
-		*i = (*f)(*i, ctx);
+	for (n = ngx_dict_first_node(d); n != NULL; n = ngx_dict_next_node(n))
+		(*f)(&n->key, ctx);
 }
 
 
 void
-ngx_dict_traverse_keys(ngx_dict_t *d, ngx_dict_traverse_fun_t f, void *ctx)
+ngx_dict_traverse_values(const ngx_dict_t *d, ngx_dict_traverse_fun_t f, void *ctx)
 {
-	ngx_dict_item_t *i;
+	ngx_dict_node_t *n;
 
-	for (i = ngx_dict_item_first(d); i != NULL; i = ngx_dict_item_next(d, i))
-		(*f)((void*) i->key, ctx);
-}
-
-
-void
-ngx_dict_traverse_values(ngx_dict_t *d, ngx_dict_traverse_fun_t f, void *ctx)
-{
-	ngx_dict_item_t *i;
-
-	for (i = ngx_dict_item_first(d); i != NULL; i = ngx_dict_item_next(d, i))
-		i->val = (*f)(i->val, ctx);
+	for (n = ngx_dict_first_node(d); n != NULL; n = ngx_dict_next_node(n))
+		(*f)(n->val, ctx);
 }
 
