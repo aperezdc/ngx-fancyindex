@@ -13,7 +13,6 @@
 ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 		const ngx_str_t const * path, ngx_int_t mode)
 {
-	void *dummy;
 	size_t  root;
 	u_char *last;
 	ngx_str_t resolved;
@@ -53,10 +52,10 @@ ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 		return NULL;
 
 	/* Fill in the file structure with sensible values. */
-	bfile->fd = -1;
+	bfile->fd = NGX_INVALID_FILE;
 	bfile->name.len = resolved.len;
 	bfile->name.data = resolved.data;
-	dummy = ngx_cpymem(&bfile->info, &bfileinfo, sizeof(ngx_file_info_t));
+	ngx_memcpy(&bfile->info, &bfileinfo, sizeof(ngx_file_info_t));
 	bfile->valid_info = 1;
 
 	buf = ngx_pcalloc(r->pool, sizeof(ngx_buf_t));
@@ -69,7 +68,18 @@ ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 	 * the corresponding file information (ngx_file_t) structure.
 	 */
 	buf->file = bfile;
+
+	/*
+	 * Data is in the file, so we set the flag. Nginx will decide whether to
+	 * read and send the contents or issue a call to snedfile() or whatever.
+	 */
 	buf->in_file = 1;
+
+	/*
+	 * We want to send all the contents of the file, so set the offset of the
+	 * last sent byte to the length of the file minus one (remeber: use offset)
+	 */
+	buf->file_last = ngx_file_size(&bfileinfo) - 1;
 
 	return buf;
 }
