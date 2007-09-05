@@ -63,6 +63,14 @@ ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 	if (buf == NULL)
 		return NULL;
 
+	/*
+	 * ngx_pcalloc() makes zeros, which are good defaults for most values, we
+	 * tell nginx that the file is on-disk, not in memory, and we associate
+	 * the corresponding file information (ngx_file_t) structure.
+	 */
+	buf->file = bfile;
+	buf->in_file = 1;
+
 	return buf;
 }
 
