@@ -50,20 +50,6 @@ typedef struct {
 
 
 
-typedef struct {
-    ngx_flag_t enable;
-    ngx_flag_t localtime;
-    ngx_flag_t exact_size;
-
-    ngx_str_t  header;
-    ngx_str_t  footer;
-    ngx_str_t  readme;
-
-    ngx_uint_t readme_flags;
-    ngx_uint_t include_mode;
-} ngx_http_fancyindex_loc_conf_t;
-
-
 
 
 static ngx_inline ngx_str_t

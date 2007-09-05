@@ -31,6 +31,27 @@
 #define NGX_HTTP_FANCYINDEX_INCLUDE_CACHED  1
 
 
+
+/**
+ * Configuration structure for the fancyindex module. The configuration
+ * commands defined in the module do fill in the members of this structure.
+ */
+typedef struct {
+    ngx_flag_t enable;       /**< Module is enabled. */
+    ngx_flag_t localtime;    /**< File mtime dates are sent in local time. */
+    ngx_flag_t exact_size;   /**< Sizes are sent always in bytes. */
+
+    ngx_str_t  header;       /**< File name for header, or empty if none. */
+    ngx_str_t  footer;       /**< File name for footer, or empty if none. */
+    ngx_str_t  readme;       /**< File name for readme, or empty if none. */
+
+    ngx_uint_t readme_flags; /**< Options for readme file inclusion. */
+    ngx_uint_t include_mode; /**< Controls how to include footer/header. */
+} ngx_http_fancyindex_loc_conf_t;
+
+
+
+
 #define nfi_sizeof_ssz(_s)  (sizeof(_s) - 1)
 
 
