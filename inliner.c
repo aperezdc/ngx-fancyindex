@@ -14,6 +14,7 @@ ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 		const ngx_str_t const * path, ngx_int_t mode)
 {
 	size_t root_len;
+	u_char *pos;
 	ngx_str_t resolved;
 	ngx_buf_t *buf;
 	ngx_file_t *bfile;
@@ -22,9 +23,11 @@ ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 	ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
 			"http nfi_inline_getbuf path: \"%V\"", path);
 
-	ngx_memcpy(
-			ngx_http_map_uri_to_path(r, &resolved, &root_len, path->len),
-			path->data, path->len);
+	/*
+	 * TODO: We do not handle absolute paths in configuration file yet.
+	 */
+	pos = ngx_http_map_uri_to_path(r, &resolved, &root_len, path->len);
+	ngx_memcpy(pos, path->data, path->len);
 
 	ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
 			"nfi_inline_getbuf resolved: \"%V\"", &resolved);
