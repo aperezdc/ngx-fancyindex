@@ -412,7 +412,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     if (readme_path.len == 0) goto skip_readme_len;
 
     if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME)) {
-        len += 3 /* CR+LF+'/' */
+        len += 2 /* CR+LF */
             + nfi_sizeof_ssz("<iframe id=\"readme\" src=\"")
             + r->uri.len + alcf->readme.len
             + nfi_sizeof_ssz("\">(readme file)</iframe>")
@@ -479,7 +479,6 @@ skip_readme_len:
         do { \
             b->last = nfi_cpymem_ssz(b->last, "<iframe id=\"readme\" src=\""); \
             b->last = nfi_cpymem_str(b->last, r->uri); \
-            *b->last++ = '/'; \
             b->last = nfi_cpymem_str(b->last, alcf->readme); \
             b->last = nfi_cpymem_ssz(b->last, "\">(readme file)</iframe>"); \
             *b->last++ = CR; \

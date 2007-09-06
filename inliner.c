@@ -13,6 +13,7 @@
 ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 		const ngx_str_t const * path, ngx_int_t mode)
 {
+	size_t root_len;
 	ngx_str_t resolved;
 	ngx_buf_t *buf;
 	ngx_file_t *bfile;
@@ -21,17 +22,12 @@ ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 	ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
 			"http nfi_inline_getbuf path: \"%V\"", path);
 
-	resolved.len  = r->uri.len + path->len;
-	resolved.data = ngx_palloc(r->pool, resolved.len + 1);
-	if (resolved.data == NULL)
-		return NULL;
-
 	ngx_memcpy(
-			ngx_cpymem(resolved.data, r->uri.data, r->uri.len),
+			ngx_http_map_uri_to_path(r, &resolved, &root_len, path->len),
 			path->data, path->len);
 
 	ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-			"http nfi_inline_getbuf resolved: \"%V\"", &resolved);
+			"nfi_inline_getbuf resolved: \"%V\"", &resolved);
 
 	/*
 	 * Append final '\0' so we can use it to call ngx_file_info() below.
@@ -46,7 +42,7 @@ ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *r,
 
 	if (ngx_file_info(resolved.data, &bfileinfo) != 0) {
 		ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, ngx_errno,
-				"http nfi_inline_getbuf no file stats");
+				"nfi_inline_getbuf no file stats");
 		return NULL;
 	}
 
