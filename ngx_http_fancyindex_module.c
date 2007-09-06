@@ -19,11 +19,13 @@
  * Distributed under terms of the BSD license.
  */
 
+#include "ngx_http_fancyindex_module.h"
+#include "template.h"
+
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
-#include "ngx_http_fancyindex_module.h"
-#include "template.h"
+#include <ngx_log.h>
 
 
 #if 0
@@ -189,6 +191,8 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     ngx_tm_t                        tm;
     ngx_err_t                       err;
     ngx_buf_t                      *b;
+    ngx_buf_t                      *bheader = NULL;
+    ngx_buf_t                      *bfooter = NULL;
     ngx_int_t                       rc, size;
     ngx_str_t                       path;
     ngx_str_t                       readme_path;
@@ -382,6 +386,16 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     if (ngx_close_dir(&dir) == NGX_ERROR) {
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, ngx_errno,
                       ngx_close_dir_n " \"%s\" failed", &path);
+    }
+
+    /*
+     * Try to get header and footer, if enabled.
+     */
+    if (alcf->header.len > 0) {
+        bheader = nfi_inline_getbuf(r, &alcf->header, alcf->include_mode);
+    }
+    if (alcf->footer.len > 0) {
+        bfooter = nfi_inline_getbuf(r, &alcf->footer, alcf->include_mode);
     }
 
     len = NFI_TEMPLATE_SIZE
