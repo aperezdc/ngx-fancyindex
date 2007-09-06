@@ -93,18 +93,6 @@ typedef struct {
 	(((_where) & (_what)) == (_what))
 
 
-#include <ngx_http.h>
-
-/**
- * Get a buffer out of a file name. The buffer will be ready to add to
- * a processing chain (an ngx_chain_t). The "mode" determines how the file
- * will be searched for, it ca be either NGX_HTTP_FANCYINDEX_INCLUDE_STATIC
- * or NGX_HTTP_FANCYINDEX_INCLUDE_CACHED.
- */
-ngx_buf_t* nfi_inline_getbuf(ngx_http_request_t *req,
-		const ngx_str_t const * path, ngx_int_t mode);
-
-
 #endif /* !__ngx_http_fancyindex_module_h__ */
 /* vim:ft=c
  */

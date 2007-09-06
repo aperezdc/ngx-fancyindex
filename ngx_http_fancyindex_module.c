@@ -191,8 +191,6 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     ngx_tm_t                        tm;
     ngx_err_t                       err;
     ngx_buf_t                      *b;
-    ngx_buf_t                      *bheader = NULL;
-    ngx_buf_t                      *bfooter = NULL;
     ngx_int_t                       rc, size;
     ngx_str_t                       path;
     ngx_str_t                       readme_path;
@@ -389,15 +387,10 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     }
 
     /*
-     * Try to get header and footer, if enabled.
+     * FIXME: When adding header and/or footer from external resources we
+     * are wasting some bytes here because we allocate space for *all*
+     * built-in template pieces.
      */
-    if (alcf->header.len > 0) {
-        bheader = nfi_inline_getbuf(r, &alcf->header, alcf->include_mode);
-    }
-    if (alcf->footer.len > 0) {
-        bfooter = nfi_inline_getbuf(r, &alcf->footer, alcf->include_mode);
-    }
-
     len = NFI_TEMPLATE_SIZE
           + r->uri.len /* URI is included two times: as <title> in the */
           + r->uri.len /* HTML head and as an <h1> in the HTML body    */
