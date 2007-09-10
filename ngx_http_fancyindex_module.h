@@ -46,7 +46,6 @@ typedef struct {
     ngx_str_t  readme;       /**< File name for readme, or empty if none. */
 
     ngx_uint_t readme_flags; /**< Options for readme file inclusion. */
-    ngx_uint_t include_mode; /**< Controls how to include footer/header. */
 } ngx_http_fancyindex_loc_conf_t;
 
 

@@ -80,13 +80,6 @@ static const ngx_conf_bitmask_t ngx_http_fancyindex_readme_flags[] = {
 
 
 
-static const ngx_conf_enum_t ngx_http_fancyindex_include_modes[] = {
-    { ngx_string("static"), NGX_HTTP_FANCYINDEX_INCLUDE_STATIC },
-    { ngx_string("cached"), NGX_HTTP_FANCYINDEX_INCLUDE_CACHED },
-    { ngx_null_string,      0                                  },
-};
-
-
 static ngx_command_t  ngx_http_fancyindex_commands[] = {
 
     { ngx_string("fancyindex"),
@@ -137,13 +130,6 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, readme_flags),
       &ngx_http_fancyindex_readme_flags },
-
-    { ngx_string("fancyindex_include_mode"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
-      ngx_conf_set_enum_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_fancyindex_loc_conf_t, include_mode),
-      &ngx_http_fancyindex_include_modes },
 
       ngx_null_command
 };
@@ -841,7 +827,6 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
     conf->enable = NGX_CONF_UNSET;
     conf->localtime = NGX_CONF_UNSET;
     conf->exact_size = NGX_CONF_UNSET;
-    conf->include_mode = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -856,8 +841,6 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->enable, prev->enable, 0);
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
-    ngx_conf_merge_uint_value(conf->include_mode, prev->include_mode,
-            NGX_HTTP_FANCYINDEX_INCLUDE_STATIC);
 
     ngx_conf_merge_str_value(conf->header, prev->header, "");
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");

@@ -130,23 +130,6 @@ fancyindex_readme_mode
       will instruct the client to perform an additional request in order to
       fetch the contents of the frame.
 
-fancyindex_include_mode
-:Syntax: *fancyindex_include_mode* *static* | *cached* 
-:Default: *fancyindex_include_mode static*
-:Context: http, server, location
-:Description:
-  Controls how to include the header and footer specified by
-  `fancyindex_header`_ and `fancyindex_footer`_, Available options are:
-
-    static
-      Read file contents on each request. This is the less efficient method,
-      but generated content will always follow on-disk changes of head and
-      footer templates.
-    cached
-      Header and footer contents will be read the first time they are
-      needed, and kept in memory for thei use in subsequent requests. If the
-      modification time of files changes, they will be re-read as needed.
-
 
 .. _nginx: http://nginx.net
 
