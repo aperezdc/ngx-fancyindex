@@ -203,8 +203,8 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     ngx_http_fancyindex_entry_t    *entry;
     ngx_http_fancyindex_loc_conf_t *alcf;
 
-    static char  *months[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    static char *months[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", };
 
     if (r->uri.data[r->uri.len - 1] != '/') {
         return NGX_DECLINED;
@@ -455,11 +455,44 @@ skip_readme_len:
                   ngx_http_fancyindex_cmp_entries);
     }
 
-    b->last = nfi_cpymem_ssz(b->last, t01_head1);
-    b->last = nfi_cpymem_str(b->last, r->uri);
-    b->last = nfi_cpymem_ssz(b->last, t02_head2);
+    if (alcf->header.len > 0) {
+        /* URI is configured, make Nginx take care of with a subrequest. */
+        ngx_http_request_t *sr;
+        ngx_str_t *sr_uri = &alcf->header;
+        ngx_str_t rel_uri;
+        ngx_int_t rc;
 
-    b->last = nfi_cpymem_ssz(b->last, t03_body1);
+        if (*sr_uri->data != '/') {
+            /* Relative path */
+            rel_uri.len  = r->uri.len + alcf->header.len;
+            rel_uri.data = ngx_palloc(r->pool, rel_uri.len);
+            if (rel_uri.data == NULL) {
+                return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            }
+            ngx_memcpy(ngx_cpymem(rel_uri.data, r->uri.data, r->uri.len),
+                    alcf->header.data, alcf->header.len);
+            sr_uri = &rel_uri;
+        }
+
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: header subrequest \"%V\"", sr_uri);
+
+        rc = ngx_http_subrequest(r, sr_uri, NULL, &sr, NULL, 0);
+        if (rc == NGX_ERROR || rc == NGX_DONE) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "http fancyindex: header subrequest for \"%V\" failed", sr_uri);
+            return rc;
+        }
+    }
+    else {
+        /* Otherwise, send the built-in header. */
+        b->last = nfi_cpymem_ssz(b->last, t01_head1);
+        b->last = nfi_cpymem_str(b->last, r->uri);
+        b->last = nfi_cpymem_ssz(b->last, t02_head2);
+
+        b->last = nfi_cpymem_ssz(b->last, t03_body1);
+    }
+
     b->last = nfi_cpymem_str(b->last, r->uri);
     b->last = nfi_cpymem_ssz(b->last, t04_body2);
 
@@ -643,7 +676,38 @@ skip_readme_bottom:
     b->last = nfi_cpymem_ssz(b->last, t08_body4);
 
     /* Output page footer */
-    b->last = nfi_cpymem_ssz(b->last, t09_foot1);
+    if (alcf->footer.len > 0) {
+        /* URI is configured, make Nginx take care of with a subrequest. */
+        ngx_http_request_t *sr;
+        ngx_str_t *sr_uri = &alcf->footer;
+        ngx_str_t rel_uri;
+        ngx_int_t rc;
+
+        if (*sr_uri->data != '/') {
+            /* Relative path */
+            rel_uri.len  = r->uri.len + alcf->footer.len;
+            rel_uri.data = ngx_palloc(r->pool, rel_uri.len);
+            if (rel_uri.data == NULL) {
+                return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            }
+            ngx_memcpy(ngx_cpymem(rel_uri.data, r->uri.data, r->uri.len),
+                    alcf->footer.data, alcf->footer.len);
+            sr_uri = &rel_uri;
+        }
+
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: footer subrequest \"%V\"", sr_uri);
+
+        rc = ngx_http_subrequest(r, sr_uri, NULL, &sr, NULL, 0);
+        if (rc == NGX_ERROR || rc == NGX_DONE) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "http fancyindex: footer subrequest for \"%V\" failed", sr_uri);
+            return rc;
+        }
+    }
+    else {
+        b->last = nfi_cpymem_ssz(b->last, t09_foot1);
+    }
 
     if (r == r->main) {
         b->last_buf = 1;

@@ -14,19 +14,16 @@
     <note priority="medium" time="1187975662">
         header:inline
     </note>
-    <note priority="medium" time="1187975665">
-        header:cache
-    </note>
     <note priority="medium" time="1187975708">
         footer:inline
-    </note>
-    <note priority="medium" time="1187975712">
-        footer:cache
     </note>
     <note priority="medium" time="1188384488">
         split big handler function into smaller pieces
     </note>
     <note priority="medium" time="1188484132">
         install handler *after* index handler
+    </note>
+    <note priority="medium" time="1189426947">
+        proper error message on subrequest errors
     </note>
 </todo>
