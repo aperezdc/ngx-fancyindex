@@ -469,8 +469,21 @@ skip_readme_len:
                     "http fancyindex: header subrequest for \"%V\" failed", sr_uri);
             return rc;
         }
+
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: header subrequest status = %i",
+                sr->headers_out.status);
+
+        if (sr->headers_out.status != NGX_HTTP_OK) {
+            /*
+             * XXX: Should we write a message to the error log just in case
+             * we get something different from a 404?
+             */
+            goto add_builtin_header;
+        }
     }
     else {
+add_builtin_header:
         /* Otherwise, send the built-in header. */
         b->last = nfi_cpymem_ssz(b->last, t01_head1);
         b->last = nfi_cpymem_str(b->last, r->uri);
@@ -690,8 +703,21 @@ skip_readme_bottom:
                     "http fancyindex: footer subrequest for \"%V\" failed", sr_uri);
             return rc;
         }
+
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: header subrequest status = %i",
+                sr->headers_out.status);
+
+        if (sr->headers_out.status != NGX_HTTP_OK) {
+            /*
+             * XXX: Should we write a message to the error log just in case
+             * we get something different from a 404?
+             */
+            goto add_builtin_footer;
+        }
     }
     else {
+add_builtin_footer:
         b->last = nfi_cpymem_ssz(b->last, t09_foot1);
     }
 
