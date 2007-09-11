@@ -210,85 +210,62 @@ bailout:
 
 
 
-static ngx_int_t
-ngx_http_fancyindex_handler(ngx_http_request_t *r)
+static inline ngx_int_t
+make_content_buf(
+        ngx_http_request_t *r, ngx_buf_t **pb,
+        ngx_http_fancyindex_loc_conf_t *alcf)
 {
-    u_char                         *last, *filename, scale;
-    off_t                           length;
-    size_t                          len, copy, allocated, root;
-    ngx_tm_t                        tm;
-    ngx_err_t                       err;
-    ngx_buf_t                      *b;
-    ngx_int_t                       rc, size;
-    ngx_str_t                       path;
-    ngx_str_t                       readme_path;
-    ngx_dir_t                       dir;
-    ngx_uint_t                      i, level;
-    ngx_pool_t                     *pool;
-    ngx_time_t                     *tp;
-    ngx_chain_t                     out;
-    ngx_array_t                     entries;
-    ngx_http_fancyindex_entry_t    *entry;
-    ngx_http_fancyindex_loc_conf_t *alcf;
+    ngx_http_fancyindex_entry_t *entry;
 
-    static char *months[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", };
+    off_t        length;
+    size_t       len, root, copy, allocated;
+    u_char      *filename, *last, scale;
+    ngx_tm_t     tm;
+    ngx_array_t  entries;
+    ngx_time_t  *tp;
+    ngx_uint_t   i;
+    ngx_int_t    size;
+    ngx_str_t    path;
+    ngx_str_t    readme_path;
+    ngx_dir_t    dir;
+    ngx_buf_t   *b;
 
-    if (r->uri.data[r->uri.len - 1] != '/') {
-        return NGX_DECLINED;
-    }
+    static char *months[] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    };
 
-    /* TODO: Win32 */
-    if (r->zero_in_uri) {
-        return NGX_DECLINED;
-    }
-
-    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
-        return NGX_DECLINED;
-    }
-
-    alcf = ngx_http_get_module_loc_conf(r, ngx_http_fancyindex_module);
-
-    if (!alcf->enable) {
-        return NGX_DECLINED;
-    }
-
-    /* NGX_DIR_MASK_LEN is lesser than NGX_HTTP_FANCYINDEX_PREALLOCATE */
-
-    last = ngx_http_map_uri_to_path(r, &path, &root,
-                                    NGX_HTTP_FANCYINDEX_PREALLOCATE);
-    if (last == NULL) {
+    /*
+     * NGX_DIR_MASK_LEN is lesser than NGX_HTTP_FANCYINDEX_PREALLOCATE
+     */
+    if ((last = ngx_http_map_uri_to_path(r, &path, &root,
+                    NGX_HTTP_FANCYINDEX_PREALLOCATE)) == NULL)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
 
     allocated = path.len;
-    path.len = last - path.data - 1;
+    path.len  = last - path.data - 1;
     path.data[path.len] = '\0';
 
     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                    "http fancyindex: \"%s\"", path.data);
 
     if (ngx_open_dir(&path, &dir) == NGX_ERROR) {
-        err = ngx_errno;
+        ngx_int_t rc, err = ngx_errno;
+        ngx_uint_t level;
 
-        if (err == NGX_ENOENT
-            || err == NGX_ENOTDIR
-            || err == NGX_ENAMETOOLONG)
-        {
+        if (err == NGX_ENOENT || err == NGX_ENOTDIR || err == NGX_ENAMETOOLONG) {
             level = NGX_LOG_ERR;
             rc = NGX_HTTP_NOT_FOUND;
-
         } else if (err == NGX_EACCES) {
             level = NGX_LOG_ERR;
             rc = NGX_HTTP_FORBIDDEN;
-
         } else {
             level = NGX_LOG_CRIT;
             rc = NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
 
         ngx_log_error(level, r->connection->log, err,
-                      ngx_open_dir_n " \"%s\" failed", path.data);
+                ngx_open_dir_n " \"%s\" failed", path.data);
 
         return rc;
     }
@@ -298,40 +275,26 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     ngx_memzero(&entries, sizeof(ngx_array_t));
 #endif /* NGX_SUPPRESS_WARN */
 
-    /* TODO: pool should be temporary pool */
-    pool = r->pool;
 
-    if (ngx_array_init(&entries, pool, 40, sizeof(ngx_http_fancyindex_entry_t))
-        != NGX_OK)
-    {
+    if (ngx_array_init(&entries, r->pool, 40,
+                sizeof(ngx_http_fancyindex_entry_t)) != NGX_OK)
         return ngx_http_fancyindex_error(r, &dir, &path);
-    }
-
-    r->headers_out.status = NGX_HTTP_OK;
-    r->headers_out.content_type_len = nfi_sizeof_ssz("text/html");
-    r->headers_out.content_type.data = (u_char *) "text/html";
-
-    rc = ngx_http_send_header(r);
-
-    if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
-        return rc;
-    }
 
     filename = path.data;
     filename[path.len] = '/';
 
-    for ( ;; ) {
+    /* Read directory entries and their associated information. */
+    for (;;) {
         ngx_set_errno(0);
 
         if (ngx_read_dir(&dir) == NGX_ERROR) {
-            err = ngx_errno;
+            ngx_int_t err = ngx_errno;
 
             if (err != NGX_ENOMOREFILES) {
                 ngx_log_error(NGX_LOG_CRIT, r->connection->log, err,
-                              ngx_read_dir_n " \"%V\" failed", &path);
+                        ngx_read_dir_n " \"%V\" failed", &path);
                 return ngx_http_fancyindex_error(r, &dir, &path);
             }
-
             break;
         }
 
@@ -340,22 +303,17 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
 
         len = ngx_de_namelen(&dir);
 
-        if (ngx_de_name(&dir)[0] == '.') {
+        if (ngx_de_name(&dir)[0] == '.')
             continue;
-        }
 
         if (!dir.valid_info) {
-
             /* 1 byte for '/' and 1 byte for terminating '\0' */
-
             if (path.len + 1 + len + 1 > allocated) {
                 allocated = path.len + 1 + len + 1
-                                     + NGX_HTTP_FANCYINDEX_PREALLOCATE;
+                          + NGX_HTTP_FANCYINDEX_PREALLOCATE;
 
-                filename = ngx_palloc(pool, allocated);
-                if (filename == NULL) {
+                if ((filename = ngx_palloc(r->pool, allocated)) == NULL)
                     return ngx_http_fancyindex_error(r, &dir, &path);
-                }
 
                 last = ngx_cpystrn(filename, path.data, path.len + 1);
                 *last++ = '/';
@@ -364,65 +322,55 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
             ngx_cpystrn(last, ngx_de_name(&dir), len + 1);
 
             if (ngx_de_info(filename, &dir) == NGX_FILE_ERROR) {
-                err = ngx_errno;
+                ngx_int_t err = ngx_errno;
 
                 if (err != NGX_ENOENT) {
                     ngx_log_error(NGX_LOG_CRIT, r->connection->log, err,
-                                  ngx_de_info_n " \"%s\" failed", filename);
+                            ngx_de_info_n " \"%s\" failed", filename);
                     return ngx_http_fancyindex_error(r, &dir, &path);
                 }
 
                 if (ngx_de_link_info(filename, &dir) == NGX_FILE_ERROR) {
                     ngx_log_error(NGX_LOG_CRIT, r->connection->log, ngx_errno,
-                                  ngx_de_link_info_n " \"%s\" failed",
-                                  filename);
+                            ngx_de_link_info_n " \"%s\" failed", filename);
                     return ngx_http_fancyindex_error(r, &dir, &path);
                 }
             }
         }
 
-        entry = ngx_array_push(&entries);
-        if (entry == NULL) {
+        if ((entry = ngx_array_push(&entries)) == NULL)
             return ngx_http_fancyindex_error(r, &dir, &path);
-        }
 
-        entry->name.len = len;
-
-        entry->name.data = ngx_palloc(pool, len + 1);
-        if (entry->name.data == NULL) {
+        entry->name.len  = len;
+        entry->name.data = ngx_palloc(r->pool, len + 1);
+        if (entry->name.data == NULL)
             return ngx_http_fancyindex_error(r, &dir, &path);
-        }
 
         ngx_cpystrn(entry->name.data, ngx_de_name(&dir), len + 1);
+        entry->escape = 2 * ngx_escape_uri(NULL,
+                ngx_de_name(&dir), len, NGX_ESCAPE_HTML);
 
-        entry->escape = 2 * ngx_escape_uri(NULL, ngx_de_name(&dir), len,
-                                           NGX_ESCAPE_HTML);
-
-        if (r->utf8) {
-            entry->utf_len = ngx_utf_length(entry->name.data, entry->name.len);
-        } else {
-            entry->utf_len = len;
-        }
-
-        entry->dir = ngx_de_is_dir(&dir);
-        entry->mtime = ngx_de_mtime(&dir);
-        entry->size = ngx_de_size(&dir);
+        entry->dir     = ngx_de_is_dir(&dir);
+        entry->mtime   = ngx_de_mtime(&dir);
+        entry->size    = ngx_de_size(&dir);
+        entry->utf_len = (r->utf8)
+            ?  ngx_utf_length(entry->name.data, entry->name.len)
+            : len;
     }
 
     if (ngx_close_dir(&dir) == NGX_ERROR) {
         ngx_log_error(NGX_LOG_ALERT, r->connection->log, ngx_errno,
-                      ngx_close_dir_n " \"%s\" failed", &path);
+                ngx_close_dir_n " \"%s\" failed", &path);
     }
 
     /*
-     * FIXME: When adding header and/or footer from external resources we
-     * are wasting some bytes here because we allocate space for *all*
-     * built-in template pieces.
+     * Calculate needed buffer length.
      */
-    len = NFI_TEMPLATE_SIZE
-          + r->uri.len /* URI is included two times: as <title> in the */
-          + r->uri.len /* HTML head and as an <h1> in the HTML body    */
-          ;
+    len = r->uri.len
+        + nfi_sizeof_ssz(t04_body2)
+        + nfi_sizeof_ssz(t05_list1)
+        + nfi_sizeof_ssz(t06_list2)
+        ;
 
     /*
      * If including an <iframe> for the readme file, add the length of the
@@ -430,23 +378,21 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
      * needed markup.
      */
     readme_path = nfi_get_readme_path(r, &path);
-    if (readme_path.len == 0) goto skip_readme_len;
-
-    if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME)) {
-        len += 2 /* CR+LF */
-            + nfi_sizeof_ssz("<iframe id=\"readme\" src=\"")
-            + r->uri.len + alcf->readme.len
-            + nfi_sizeof_ssz("\">(readme file)</iframe>")
-            ;
+    if (readme_path.len > 0) {
+        if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME)) {
+            len += 2 /* CR+LF */
+                + nfi_sizeof_ssz("<iframe id=\"readme\" src=\"")
+                + r->uri.len + alcf->readme.len
+                + nfi_sizeof_ssz("\">(readme file)</iframe>")
+                ;
+        }
+        else {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                    "fancyindex: bad readme_flags combination %#x",
+                    alcf->readme_flags);
+        }
     }
-    else {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                "fancyindex: bad readme_flags combination %#x",
-                alcf->readme_flags);
-    }
 
-
-skip_readme_len:
     entry = entries.elts;
     for (i = 0; i < entries.nelts; i++) {
         /*
@@ -472,66 +418,14 @@ skip_readme_len:
             ;
     }
 
-    b = ngx_create_temp_buf(r->pool, len);
-    if (b == NULL) {
+    if ((b = ngx_create_temp_buf(r->pool, len)) == NULL)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
 
+    /* Sort entries, if needed */
     if (entries.nelts > 1) {
         ngx_qsort(entry, (size_t) entries.nelts,
-                  sizeof(ngx_http_fancyindex_entry_t),
-                  ngx_http_fancyindex_cmp_entries);
-    }
-
-    if (alcf->header.len > 0) {
-        /* URI is configured, make Nginx take care of with a subrequest. */
-        ngx_http_request_t *sr;
-        ngx_str_t *sr_uri = &alcf->header;
-        ngx_str_t rel_uri;
-        ngx_int_t rc;
-
-        if (*sr_uri->data != '/') {
-            /* Relative path */
-            rel_uri.len  = r->uri.len + alcf->header.len;
-            rel_uri.data = ngx_palloc(r->pool, rel_uri.len);
-            if (rel_uri.data == NULL) {
-                return NGX_HTTP_INTERNAL_SERVER_ERROR;
-            }
-            ngx_memcpy(ngx_cpymem(rel_uri.data, r->uri.data, r->uri.len),
-                    alcf->header.data, alcf->header.len);
-            sr_uri = &rel_uri;
-        }
-
-        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                "http fancyindex: header subrequest \"%V\"", sr_uri);
-
-        rc = ngx_http_subrequest(r, sr_uri, NULL, &sr, NULL, 0);
-        if (rc == NGX_ERROR || rc == NGX_DONE) {
-            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                    "http fancyindex: header subrequest for \"%V\" failed", sr_uri);
-            return rc;
-        }
-
-        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                "http fancyindex: header subrequest status = %i",
-                sr->headers_out.status);
-
-        if (sr->headers_out.status != NGX_HTTP_OK) {
-            /*
-             * XXX: Should we write a message to the error log just in case
-             * we get something different from a 404?
-             */
-            goto add_builtin_header;
-        }
-    }
-    else {
-add_builtin_header:
-        /* Otherwise, send the built-in header. */
-        b->last = nfi_cpymem_ssz(b->last, t01_head1);
-        b->last = nfi_cpymem_str(b->last, r->uri);
-        b->last = nfi_cpymem_ssz(b->last, t02_head2);
-
-        b->last = nfi_cpymem_ssz(b->last, t03_body1);
+                sizeof(ngx_http_fancyindex_entry_t),
+                ngx_http_fancyindex_cmp_entries);
     }
 
     b->last = nfi_cpymem_str(b->last, r->uri);
@@ -559,7 +453,6 @@ add_builtin_header:
                 "fancyindex: bad readme_flags combination %#x",
                 alcf->readme_flags);
     }
-
 skip_readme_top:
 
     /* Output table header */
@@ -688,8 +581,6 @@ skip_readme_top:
         *b->last++ = LF;
     }
 
-    /* TODO: free temporary pool */
-
     /* Output table bottom */
     b->last = nfi_cpymem_ssz(b->last, t06_list2);
 
@@ -706,8 +597,112 @@ skip_readme_top:
                 "fancyindex: bad readme_flags combination %#x",
                 alcf->readme_flags);
     }
-
 skip_readme_bottom:
+
+    *pb = b;
+    return NGX_OK;
+}
+
+
+
+static ngx_int_t
+ngx_http_fancyindex_handler(ngx_http_request_t *r)
+{
+    ngx_int_t                       rc;
+    ngx_chain_t                     out;
+    ngx_http_fancyindex_loc_conf_t *alcf;
+
+
+    if (r->uri.data[r->uri.len - 1] != '/') {
+        return NGX_DECLINED;
+    }
+
+    /* TODO: Win32 */
+    if (r->zero_in_uri) {
+        return NGX_DECLINED;
+    }
+
+    if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
+        return NGX_DECLINED;
+    }
+
+    alcf = ngx_http_get_module_loc_conf(r, ngx_http_fancyindex_module);
+
+    if (!alcf->enable) {
+        return NGX_DECLINED;
+    }
+
+    if ((rc = make_content_buf(r, &out.buf, alcf) != NGX_OK))
+        return rc;
+
+    out.next = NULL;
+    out.buf->last_in_chain = 1;
+    out.buf->last_buf = 0;
+    if ((rc = ngx_http_output_filter(r, &out)) != NGX_HTTP_OK)
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+
+    r->headers_out.status = NGX_HTTP_OK;
+    r->headers_out.content_type_len = nfi_sizeof_ssz("text/html");
+    r->headers_out.content_type.data = (u_char *) "text/html";
+
+    rc = ngx_http_send_header(r);
+
+    if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+        return rc;
+    }
+
+
+    if (alcf->header.len > 0) {
+        /* URI is configured, make Nginx take care of with a subrequest. */
+        ngx_http_request_t *sr;
+        ngx_str_t *sr_uri = &alcf->header;
+        ngx_str_t rel_uri;
+        ngx_int_t rc;
+
+        if (*sr_uri->data != '/') {
+            /* Relative path */
+            rel_uri.len  = r->uri.len + alcf->header.len;
+            rel_uri.data = ngx_palloc(r->pool, rel_uri.len);
+            if (rel_uri.data == NULL) {
+                return NGX_HTTP_INTERNAL_SERVER_ERROR;
+            }
+            ngx_memcpy(ngx_cpymem(rel_uri.data, r->uri.data, r->uri.len),
+                    alcf->header.data, alcf->header.len);
+            sr_uri = &rel_uri;
+        }
+
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: header subrequest \"%V\"", sr_uri);
+
+        rc = ngx_http_subrequest(r, sr_uri, NULL, &sr, NULL, 0);
+        if (rc == NGX_ERROR || rc == NGX_DONE) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "http fancyindex: header subrequest for \"%V\" failed", sr_uri);
+            return rc;
+        }
+
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: header subrequest status = %i",
+                sr->headers_out.status);
+
+        if (sr->headers_out.status != NGX_HTTP_OK) {
+            /*
+             * XXX: Should we write a message to the error log just in case
+             * we get something different from a 404?
+             */
+            goto add_builtin_header;
+        }
+    }
+    else {
+add_builtin_header:
+        out.next = NULL;
+        out.buf  = make_header_buf(r);
+        out.buf->last_in_chain = 1;
+        out.buf->last_buf = 0;
+        if ((rc = ngx_http_output_filter(r, &out)) != NGX_HTTP_OK)
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
     /* Output page footer */
     if (alcf->footer.len > 0) {
         /* URI is configured, make Nginx take care of with a subrequest. */
@@ -752,21 +747,15 @@ skip_readme_bottom:
     }
     else {
 add_builtin_footer:
-            b->last = nfi_cpymem_ssz(b->last, t07_foot1);
-        }
-
-        if (r == r->main) {
-            b->last_buf = 1;
-        }
-
-        b->last_in_chain = 1;
-
-        nfi_log_debug_buf_chain(r, &out);
-
-        out.buf = b;
         out.next = NULL;
+        out.buf  = make_footer_buf(r);
+        out.buf->last_in_chain = 1;
+        out.buf->last_buf = 0;
+        if ((rc = ngx_http_output_filter(r, &out)) != NGX_HTTP_OK)
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
 
-        return ngx_http_output_filter(r, &out);
+    return (r != r->main) ? rc : ngx_http_send_special(r, NGX_HTTP_LAST);
 }
 
 
