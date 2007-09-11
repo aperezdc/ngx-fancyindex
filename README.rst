@@ -97,7 +97,7 @@ fancyindex_readme
 :Description:
   Specifies which file should be inserted alongside with directory listings.
   If set to an empty string, no extra textual content is included. See
-  `fancyindex_readme_options`_ in order to learn more about how the readme
+  `fancyindex_readme_mode`_ in order to learn more about how the readme
   file may be included.
 
 fancyindex_readme_mode
