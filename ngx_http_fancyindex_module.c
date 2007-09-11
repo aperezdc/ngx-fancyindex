@@ -168,6 +168,48 @@ ngx_module_t  ngx_http_fancyindex_module = {
 
 
 
+static inline ngx_buf_t*
+make_header_buf(ngx_http_request_t *r)
+{
+    size_t blen = r->uri.len
+        + nfi_sizeof_ssz(t01_head1)
+        + nfi_sizeof_ssz(t02_head2)
+        + nfi_sizeof_ssz(t03_body1)
+        ;
+    ngx_buf_t *b = ngx_create_temp_buf(r->pool, blen);
+
+    if (b == NULL) goto bailout;
+
+    b->last = nfi_cpymem_ssz(b->last, t01_head1);
+    b->last = nfi_cpymem_str(b->last, r->uri);
+    b->last = nfi_cpymem_ssz(b->last, t02_head2);
+    b->last = nfi_cpymem_ssz(b->last, t03_body1);
+
+bailout:
+    return b;
+}
+
+
+
+static inline ngx_buf_t*
+make_footer_buf(ngx_http_request_t *r)
+{
+    /*
+     * TODO: Make this buffer static (i.e. readonly and reusable from
+     * one request to another.
+     */
+    ngx_buf_t *b = ngx_create_temp_buf(r->pool, nfi_sizeof_ssz(t07_foot1));
+
+    if (b == NULL) goto bailout;
+
+    b->last = nfi_cpymem_ssz(b->last, t07_foot1);
+
+bailout:
+    return b;
+}
+
+
+
 static ngx_int_t
 ngx_http_fancyindex_handler(ngx_http_request_t *r)
 {
@@ -651,12 +693,6 @@ skip_readme_top:
     /* Output table bottom */
     b->last = nfi_cpymem_ssz(b->last, t06_list2);
 
-    /*
-     * Output body end, including readme if requested. The t07_body3 and
-     * t08_body4 templates may be empty, so use ngx_http_fancyindex_tcpy_if
-     */
-    b->last = nfi_cpymem_ssz(b->last, t07_body3);
-
     /* Insert readme at bottom, if appropriate */
     if ((readme_path.len == 0) ||
             nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_TOP) ||
@@ -672,8 +708,6 @@ skip_readme_top:
     }
 
 skip_readme_bottom:
-    b->last = nfi_cpymem_ssz(b->last, t08_body4);
-
     /* Output page footer */
     if (alcf->footer.len > 0) {
         /* URI is configured, make Nginx take care of with a subrequest. */
@@ -718,19 +752,21 @@ skip_readme_bottom:
     }
     else {
 add_builtin_footer:
-        b->last = nfi_cpymem_ssz(b->last, t09_foot1);
-    }
+            b->last = nfi_cpymem_ssz(b->last, t07_foot1);
+        }
 
-    if (r == r->main) {
-        b->last_buf = 1;
-    }
+        if (r == r->main) {
+            b->last_buf = 1;
+        }
 
-    b->last_in_chain = 1;
+        b->last_in_chain = 1;
 
-    out.buf = b;
-    out.next = NULL;
+        nfi_log_debug_buf_chain(r, &out);
 
-    return ngx_http_output_filter(r, &out);
+        out.buf = b;
+        out.next = NULL;
+
+        return ngx_http_output_filter(r, &out);
 }
 
 

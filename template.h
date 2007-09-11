@@ -98,20 +98,14 @@ static const u_char t06_list2[] = ""
 "</tbody>"
 "</table>"
 ;
-static const u_char t07_body3[] = ""
-;
-static const u_char t08_body4[] = ""
-;
-static const u_char t09_foot1[] = ""
+static const u_char t07_foot1[] = ""
 "</body>"
 "</html>"
 ;
 #define NFI_TEMPLATE_SIZE (0 \
 	+ nfi_sizeof_ssz(t05_list1) \
 	+ nfi_sizeof_ssz(t06_list2) \
-	+ nfi_sizeof_ssz(t07_body3) \
-	+ nfi_sizeof_ssz(t08_body4) \
-	+ nfi_sizeof_ssz(t09_foot1) \
+	+ nfi_sizeof_ssz(t07_foot1) \
 	+ nfi_sizeof_ssz(t01_head1) \
 	+ nfi_sizeof_ssz(t02_head2) \
 	+ nfi_sizeof_ssz(t03_body1) \

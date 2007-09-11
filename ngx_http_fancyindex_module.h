@@ -54,16 +54,6 @@ typedef struct {
 #define nfi_sizeof_ssz(_s)  (sizeof(_s) - 1)
 
 
-#define NFI_BUILTIN_HEAD_SIZE ( \
-		nfi_sizeof_ssz(t01_head1) + \
-		nfi_sizeof_ssz(t02_head2) + \
-		nfi_sizeof_ssz(t03_body1) )
-
-#define NFI_BUILTIN_FOOT_SIZE ( \
-		nfi_sizeof_ssz(t08_body4) + \
-		nfi_sizeof_ssz(t09_foot1) )
-
-
 #define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
 #define NGX_HTTP_FANCYINDEX_NAME_LEN     50
 
@@ -90,6 +80,23 @@ typedef struct {
 
 #define nfi_has_flag(_where, _what) \
 	(((_where) & (_what)) == (_what))
+
+
+#define nfi_log_debug_buf_chain(_r, _b) \
+	do { \
+		ngx_chain_t *__chain_b = (_b); \
+		ngx_buf_t *__temp_b = __chain_b->buf; \
+		while (!__temp_b->last_buf && __chain_b->buf != NULL) { \
+			ngx_log_debug(NGX_LOG_DEBUG_HTTP, (_r)->connection->log, 0, \
+					"http fancyindex: buf %p, last_in_buf = %i\n" \
+					"\tmemory = %i, temporary = %i\n", \
+					__temp_b, __temp_b->last_in_chain, \
+					__temp_b->memory, __temp_b->temporary \
+					); \
+			__chain_b = __chain_b->next; \
+			__temp_b = __chain_b->buf; \
+		} \
+	} while (0)
 
 
 #endif /* !__ngx_http_fancyindex_module_h__ */
