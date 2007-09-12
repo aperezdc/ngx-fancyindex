@@ -767,8 +767,14 @@ add_builtin_header:
         out.buf  = make_header_buf(r);
         out.buf->last_in_chain = 1;
         out.buf->last_buf = 0;
-        if ((rc = ngx_http_output_filter(r, &out)) != NGX_OK)
+
+        rc = ngx_http_output_filter(r, &out);
+
+        if (rc != NGX_OK && rc != NGX_AGAIN) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "Header: YOU HIT ME (%i)", rc);
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
     }
 
     /*
@@ -778,8 +784,14 @@ add_builtin_header:
     out.buf = content;
     out.buf->last_in_chain = 1;
     out.buf->last_buf = 0;
-    if ((rc = ngx_http_output_filter(r, &out)) != NGX_OK)
+
+    rc = ngx_http_output_filter(r, &out);
+
+    if (rc != NGX_OK && rc != NGX_AGAIN) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "Content: YOU HIT ME (%i)", rc);
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
 
     /* Output page footer */
     if (alcf->footer.len > 0) {
@@ -829,8 +841,14 @@ add_builtin_footer:
         out.buf  = make_footer_buf(r);
         out.buf->last_in_chain = 1;
         out.buf->last_buf = 0;
-        if ((rc = ngx_http_output_filter(r, &out)) != NGX_OK)
+
+        rc = ngx_http_output_filter(r, &out);
+
+        if (rc != NGX_OK && rc != NGX_AGAIN) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "Footer: YOU HIT ME (%i)", rc);
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
     }
 
     return (r != r->main) ? rc : ngx_http_send_special(r, NGX_HTTP_LAST);
