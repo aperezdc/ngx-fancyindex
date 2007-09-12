@@ -6,7 +6,7 @@ Nginx_ Fancy Index module
 
 Requirements
 ============
-* Sources for Nginx_ 0.6.6, and its requirements.
+* Sources for Nginx_ 0.6.x, and its requirements.
 * Patience, and some Coffee™.
 
 
@@ -27,7 +27,7 @@ Building
    of the fancy indexing module::
 
     $ cd nginx-0.6.6
-    $ ./configure --add-module=../nginx-?.?.?  [extra desired options]
+    $ ./configure --add-module=../nginx-fancyindex-?.?.?  [extra desired options]
 
 4. Build and install the software::
 
