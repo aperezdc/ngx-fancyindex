@@ -608,6 +608,7 @@ skip_readme_bottom:
 static ngx_int_t
 ngx_http_fancyindex_handler(ngx_http_request_t *r)
 {
+    ngx_buf_t                      *content;
     ngx_int_t                       rc;
     ngx_chain_t                     out;
     ngx_http_fancyindex_loc_conf_t *alcf;
@@ -632,17 +633,12 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-    if ((rc = make_content_buf(r, &out.buf, alcf) != NGX_OK))
+    if ((rc = make_content_buf(r, &content, alcf) != NGX_OK))
         return rc;
 
-    out.next = NULL;
-    out.buf->last_in_chain = 1;
-    out.buf->last_buf = 0;
-    if ((rc = ngx_http_output_filter(r, &out)) != NGX_HTTP_OK)
-        return NGX_HTTP_INTERNAL_SERVER_ERROR;
-
     r->headers_out.status = NGX_HTTP_OK;
-    r->headers_out.content_type_len = nfi_sizeof_ssz("text/html");
+    r->headers_out.content_type_len  = nfi_sizeof_ssz("text/html");
+    r->headers_out.content_type.len  = nfi_sizeof_ssz("text/html");
     r->headers_out.content_type.data = (u_char *) "text/html";
 
     rc = ngx_http_send_header(r);
@@ -699,9 +695,19 @@ add_builtin_header:
         out.buf  = make_header_buf(r);
         out.buf->last_in_chain = 1;
         out.buf->last_buf = 0;
-        if ((rc = ngx_http_output_filter(r, &out)) != NGX_HTTP_OK)
+        if ((rc = ngx_http_output_filter(r, &out)) != NGX_OK)
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
+
+    /*
+     * Output listing content.
+     */
+    out.next = NULL;
+    out.buf = content;
+    out.buf->last_in_chain = 1;
+    out.buf->last_buf = 0;
+    if ((rc = ngx_http_output_filter(r, &out)) != NGX_OK)
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
 
     /* Output page footer */
     if (alcf->footer.len > 0) {
@@ -751,7 +757,7 @@ add_builtin_footer:
         out.buf  = make_footer_buf(r);
         out.buf->last_in_chain = 1;
         out.buf->last_buf = 0;
-        if ((rc = ngx_http_output_filter(r, &out)) != NGX_HTTP_OK)
+        if ((rc = ngx_http_output_filter(r, &out)) != NGX_OK)
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
 
