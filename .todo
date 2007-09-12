@@ -5,16 +5,16 @@
             done in r23
         </comment>
     </note>
+    <note priority="medium" time="1187975662" done="1189593070">
+        header:inline
+    </note>
     <note priority="medium" time="1187975645">
         readme:div
     </note>
     <note priority="medium" time="1187975648">
         readme:pre
     </note>
-    <note priority="medium" time="1187975662">
-        header:inline
-    </note>
-    <note priority="medium" time="1187975708">
+    <note priority="medium" time="1187975708" done="1189593086">
         footer:inline
     </note>
     <note priority="medium" time="1188384488">

@@ -19,26 +19,79 @@
  * Distributed under terms of the BSD license.
  */
 
-#include "ngx_http_fancyindex_module.h"
-#include "template.h"
-
 #include <ngx_config.h>
 #include <ngx_core.h>
 #include <ngx_http.h>
 #include <ngx_log.h>
 
+#include "template.h"
 
-#if 0
+#if defined(__GNUC__) && (__GNUC__ >= 3)
+# define ngx_force_inline __attribute__((__always_inline__))
+#else /* !__GNUC__ */
+# define ngx_force_inline
+#endif /* __GNUC__ */
 
+
+/*
+ * Flags used for the fancyindex_readme_mode directive.
+ */
+#define NGX_HTTP_FANCYINDEX_README_ASIS   0x01
+#define NGX_HTTP_FANCYINDEX_README_TOP    0x02
+#define NGX_HTTP_FANCYINDEX_README_BOTTOM 0x04
+#define NGX_HTTP_FANCYINDEX_README_DIV    0x08
+#define NGX_HTTP_FANCYINDEX_README_IFRAME 0x10
+#define NGX_HTTP_FANCYINDEX_README_PRE    0x20
+
+
+/**
+ * Configuration structure for the fancyindex module. The configuration
+ * commands defined in the module do fill in the members of this structure.
+ */
 typedef struct {
-    ngx_buf_t     *buf;
-    size_t         size;
-    ngx_pool_t    *pool;
-    size_t         alloc_size;
-    ngx_chain_t  **last_out;
-} ngx_http_fancyindex_ctx_t;
+    ngx_flag_t enable;       /**< Module is enabled. */
+    ngx_flag_t localtime;    /**< File mtime dates are sent in local time. */
+    ngx_flag_t exact_size;   /**< Sizes are sent always in bytes. */
 
-#endif
+    ngx_str_t  header;       /**< File name for header, or empty if none. */
+    ngx_str_t  footer;       /**< File name for footer, or empty if none. */
+    ngx_str_t  readme;       /**< File name for readme, or empty if none. */
+
+    ngx_uint_t readme_flags; /**< Options for readme file inclusion. */
+} ngx_http_fancyindex_loc_conf_t;
+
+
+#define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
+#define NGX_HTTP_FANCYINDEX_NAME_LEN     50
+
+
+/**
+ * Calculates the length of a NULL-terminated string. It is ugly having to
+ * remember to substract 1 from the sizeof result.
+ */
+#define ngx_sizeof_ssz(_s)  (sizeof(_s) - 1)
+
+
+/**
+ * Copy a static zero-terminated string. Useful to output template
+ * string pieces into a temporary buffer.
+ */
+#define ngx_cpymem_ssz(_p, _t) \
+	(ngx_cpymem((_p), (_t), sizeof(_t) - 1))
+
+/**
+ * Copy a ngx_str_t.
+ */
+#define ngx_cpymem_str(_p, _s) \
+	(ngx_cpymem((_p), (_s).data, (_s).len))
+
+/**
+ * Check whether a particular bit is set in a particular value.
+ */
+#define ngx_has_flag(_where, _what) \
+	(((_where) & (_what)) == (_what))
+
+
 
 
 typedef struct {
@@ -52,19 +105,38 @@ typedef struct {
 
 
 
-
-
 static ngx_inline ngx_str_t
-    nfi_get_readme_path(ngx_http_request_t *r, const ngx_str_t *last);
+    get_readme_path(ngx_http_request_t *r, const ngx_str_t *last);
 
-static int ngx_libc_cdecl ngx_http_fancyindex_cmp_entries(const void *one,
-    const void *two);
+static int ngx_libc_cdecl
+    ngx_http_fancyindex_cmp_entries(const void *one, const void *two);
+
 static ngx_int_t ngx_http_fancyindex_error(ngx_http_request_t *r,
     ngx_dir_t *dir, ngx_str_t *name);
+
 static ngx_int_t ngx_http_fancyindex_init(ngx_conf_t *cf);
+
 static void *ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf);
+
 static char *ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf,
     void *parent, void *child);
+
+/*
+ * These are used only once per handler invocation. We can tell GCC to
+ * inline them always, if possible (see how ngx_force_inline is defined
+ * above).
+ */
+static ngx_inline ngx_buf_t*
+    make_header_buf(ngx_http_request_t *r)
+    ngx_force_inline;
+
+static ngx_inline ngx_buf_t*
+    make_header_buf(ngx_http_request_t *r)
+    ngx_force_inline;
+
+static ngx_inline ngx_buf_t*
+    make_footer_buf(ngx_http_request_t *r)
+    ngx_force_inline;
 
 
 
@@ -168,22 +240,22 @@ ngx_module_t  ngx_http_fancyindex_module = {
 
 
 
-static inline ngx_buf_t*
+static ngx_inline ngx_buf_t*
 make_header_buf(ngx_http_request_t *r)
 {
     size_t blen = r->uri.len
-        + nfi_sizeof_ssz(t01_head1)
-        + nfi_sizeof_ssz(t02_head2)
-        + nfi_sizeof_ssz(t03_body1)
+        + ngx_sizeof_ssz(t01_head1)
+        + ngx_sizeof_ssz(t02_head2)
+        + ngx_sizeof_ssz(t03_body1)
         ;
     ngx_buf_t *b = ngx_create_temp_buf(r->pool, blen);
 
     if (b == NULL) goto bailout;
 
-    b->last = nfi_cpymem_ssz(b->last, t01_head1);
-    b->last = nfi_cpymem_str(b->last, r->uri);
-    b->last = nfi_cpymem_ssz(b->last, t02_head2);
-    b->last = nfi_cpymem_ssz(b->last, t03_body1);
+    b->last = ngx_cpymem_ssz(b->last, t01_head1);
+    b->last = ngx_cpymem_str(b->last, r->uri);
+    b->last = ngx_cpymem_ssz(b->last, t02_head2);
+    b->last = ngx_cpymem_ssz(b->last, t03_body1);
 
 bailout:
     return b;
@@ -191,18 +263,18 @@ bailout:
 
 
 
-static inline ngx_buf_t*
+static ngx_inline ngx_buf_t*
 make_footer_buf(ngx_http_request_t *r)
 {
     /*
      * TODO: Make this buffer static (i.e. readonly and reusable from
      * one request to another.
      */
-    ngx_buf_t *b = ngx_create_temp_buf(r->pool, nfi_sizeof_ssz(t07_foot1));
+    ngx_buf_t *b = ngx_create_temp_buf(r->pool, ngx_sizeof_ssz(t07_foot1));
 
     if (b == NULL) goto bailout;
 
-    b->last = nfi_cpymem_ssz(b->last, t07_foot1);
+    b->last = ngx_cpymem_ssz(b->last, t07_foot1);
 
 bailout:
     return b;
@@ -367,9 +439,9 @@ make_content_buf(
      * Calculate needed buffer length.
      */
     len = r->uri.len
-        + nfi_sizeof_ssz(t04_body2)
-        + nfi_sizeof_ssz(t05_list1)
-        + nfi_sizeof_ssz(t06_list2)
+        + ngx_sizeof_ssz(t04_body2)
+        + ngx_sizeof_ssz(t05_list1)
+        + ngx_sizeof_ssz(t06_list2)
         ;
 
     /*
@@ -377,13 +449,13 @@ make_content_buf(
      * URI, plus the length of the readme file name and the length of the
      * needed markup.
      */
-    readme_path = nfi_get_readme_path(r, &path);
+    readme_path = get_readme_path(r, &path);
     if (readme_path.len > 0) {
-        if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME)) {
+        if (ngx_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME)) {
             len += 2 /* CR+LF */
-                + nfi_sizeof_ssz("<iframe id=\"readme\" src=\"")
+                + ngx_sizeof_ssz("<iframe id=\"readme\" src=\"")
                 + r->uri.len + alcf->readme.len
-                + nfi_sizeof_ssz("\">(readme file)</iframe>")
+                + ngx_sizeof_ssz("\">(readme file)</iframe>")
                 ;
         }
         else {
@@ -404,16 +476,16 @@ make_content_buf(
          *     <td>size</td><td>date</td>
          *   </tr>
          */
-        len += nfi_sizeof_ssz("<tr class=\"X\"><td><a href=\"")
+        len += ngx_sizeof_ssz("<tr class=\"X\"><td><a href=\"")
             + entry[i].name.len + entry[i].escape /* Escaped URL */
-            + nfi_sizeof_ssz("\">")
+            + ngx_sizeof_ssz("\">")
             + entry[i].name.len + entry[i].utf_len
-            + NGX_HTTP_FANCYINDEX_NAME_LEN + nfi_sizeof_ssz("&gt;")
-            + nfi_sizeof_ssz("</a></td><td>")
+            + NGX_HTTP_FANCYINDEX_NAME_LEN + ngx_sizeof_ssz("&gt;")
+            + ngx_sizeof_ssz("</a></td><td>")
             + 20 /* File size */
-            + nfi_sizeof_ssz("</td><td>")
-            + nfi_sizeof_ssz(" 28-Sep-1970 12:00 ")
-            + nfi_sizeof_ssz("</td></tr>\n")
+            + ngx_sizeof_ssz("</td><td>")
+            + ngx_sizeof_ssz(" 28-Sep-1970 12:00 ")
+            + ngx_sizeof_ssz("</td></tr>\n")
             + 2 /* CR LF */
             ;
     }
@@ -428,25 +500,25 @@ make_content_buf(
                 ngx_http_fancyindex_cmp_entries);
     }
 
-    b->last = nfi_cpymem_str(b->last, r->uri);
-    b->last = nfi_cpymem_ssz(b->last, t04_body2);
+    b->last = ngx_cpymem_str(b->last, r->uri);
+    b->last = ngx_cpymem_ssz(b->last, t04_body2);
 
     /* Insert readme at top, if appropriate */
     if ((readme_path.len == 0) ||
-            !nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_TOP))
+            !ngx_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_TOP))
         goto skip_readme_top;
 
 #define nfi_add_readme_iframe( ) \
         do { \
-            b->last = nfi_cpymem_ssz(b->last, "<iframe id=\"readme\" src=\""); \
-            b->last = nfi_cpymem_str(b->last, r->uri); \
-            b->last = nfi_cpymem_str(b->last, alcf->readme); \
-            b->last = nfi_cpymem_ssz(b->last, "\">(readme file)</iframe>"); \
+            b->last = ngx_cpymem_ssz(b->last, "<iframe id=\"readme\" src=\""); \
+            b->last = ngx_cpymem_str(b->last, r->uri); \
+            b->last = ngx_cpymem_str(b->last, alcf->readme); \
+            b->last = ngx_cpymem_ssz(b->last, "\">(readme file)</iframe>"); \
             *b->last++ = CR; \
             *b->last++ = LF; \
         } while (0)
 
-    if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME))
+    if (ngx_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME))
         nfi_add_readme_iframe();
     else {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
@@ -456,19 +528,19 @@ make_content_buf(
 skip_readme_top:
 
     /* Output table header */
-    b->last = nfi_cpymem_ssz(b->last, t05_list1);
+    b->last = ngx_cpymem_ssz(b->last, t05_list1);
 
     tp = ngx_timeofday();
 
     for (i = 0; i < entries.nelts; i++) {
         static const char _evenodd[] = { 'e', 'o' };
-        b->last = nfi_cpymem_ssz(b->last, "<tr class=\"");
+        b->last = ngx_cpymem_ssz(b->last, "<tr class=\"");
         *b->last++ = _evenodd[i & 0x01];
         /*
          * Alternative implementation:
          *   *b->last++ = (i & 0x01) ? 'e' : 'o';
          */
-        b->last = nfi_cpymem_ssz(b->last, "\"><td><a href=\"");
+        b->last = ngx_cpymem_ssz(b->last, "\"><td><a href=\"");
 
         if (entry[i].escape) {
             ngx_escape_uri(b->last, entry[i].name.data, entry[i].name.len,
@@ -477,7 +549,7 @@ skip_readme_top:
             b->last += entry[i].name.len + entry[i].escape;
 
         } else {
-            b->last = nfi_cpymem_str(b->last, entry[i].name);
+            b->last = ngx_cpymem_str(b->last, entry[i].name);
         }
 
         if (entry[i].dir) {
@@ -506,7 +578,7 @@ skip_readme_top:
         }
 
         if (len > NGX_HTTP_FANCYINDEX_NAME_LEN) {
-            b->last = nfi_cpymem_ssz(last, "..&gt;</a></td><td>");
+            b->last = ngx_cpymem_ssz(last, "..&gt;</a></td><td>");
 
         } else {
             if (entry[i].dir && NGX_HTTP_FANCYINDEX_NAME_LEN - len > 0) {
@@ -514,7 +586,7 @@ skip_readme_top:
                 len++;
             }
 
-            b->last = nfi_cpymem_ssz(b->last, "</a></td><td>");
+            b->last = ngx_cpymem_ssz(b->last, "</a></td><td>");
         }
 
         if (alcf->exact_size) {
@@ -582,15 +654,15 @@ skip_readme_top:
     }
 
     /* Output table bottom */
-    b->last = nfi_cpymem_ssz(b->last, t06_list2);
+    b->last = ngx_cpymem_ssz(b->last, t06_list2);
 
     /* Insert readme at bottom, if appropriate */
     if ((readme_path.len == 0) ||
-            nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_TOP) ||
-            !nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_BOTTOM))
+            ngx_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_TOP) ||
+            !ngx_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_BOTTOM))
         goto skip_readme_bottom;
 
-    if (nfi_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME))
+    if (ngx_has_flag(alcf->readme_flags, NGX_HTTP_FANCYINDEX_README_IFRAME))
         nfi_add_readme_iframe();
     else {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
@@ -637,8 +709,8 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         return rc;
 
     r->headers_out.status = NGX_HTTP_OK;
-    r->headers_out.content_type_len  = nfi_sizeof_ssz("text/html");
-    r->headers_out.content_type.len  = nfi_sizeof_ssz("text/html");
+    r->headers_out.content_type_len  = ngx_sizeof_ssz("text/html");
+    r->headers_out.content_type.len  = ngx_sizeof_ssz("text/html");
     r->headers_out.content_type.data = (u_char *) "text/html";
 
     rc = ngx_http_send_header(r);
@@ -785,46 +857,9 @@ ngx_http_fancyindex_cmp_entries(const void *one, const void *two)
 }
 
 
-#if 0
-
-static ngx_buf_t *
-ngx_http_fancyindex_alloc(ngx_http_fancyindex_ctx_t *ctx, size_t size)
-{
-    ngx_chain_t  *cl;
-
-    if (ctx->buf) {
-
-        if ((size_t) (ctx->buf->end - ctx->buf->last) >= size) {
-            return ctx->buf;
-        }
-
-        ctx->size += ctx->buf->last - ctx->buf->pos;
-    }
-
-    ctx->buf = ngx_create_temp_buf(ctx->pool, ctx->alloc_size);
-    if (ctx->buf == NULL) {
-        return NULL;
-    }
-
-    cl = ngx_alloc_chain_link(ctx->pool);
-    if (cl == NULL) {
-        return NULL;
-    }
-
-    cl->buf = ctx->buf;
-    cl->next = NULL;
-
-    *ctx->last_out = cl;
-    ctx->last_out = &cl->next;
-
-    return ctx->buf;
-}
-
-#endif
-
 
 static ngx_inline ngx_str_t
-nfi_get_readme_path(ngx_http_request_t *r, const ngx_str_t *path)
+get_readme_path(ngx_http_request_t *r, const ngx_str_t *path)
 {
     u_char *last;
     ngx_file_info_t info;
@@ -838,8 +873,8 @@ nfi_get_readme_path(ngx_http_request_t *r, const ngx_str_t *path)
     fullpath.len  = path->len + 2 + alcf->readme.len;
     fullpath.data = ngx_palloc(r->pool, fullpath.len);
 
-    last = nfi_cpymem_str(fullpath.data, *path); *last++ = '/';
-    last = nfi_cpymem_str(last, alcf->readme); *last++ = '\0';
+    last = ngx_cpymem_str(fullpath.data, *path); *last++ = '/';
+    last = ngx_cpymem_str(last, alcf->readme); *last++ = '\0';
 
     /* File does not exists, or cannot be accessed */
     if (ngx_file_info(fullpath.data, &info) != 0)
