@@ -608,7 +608,7 @@ skip_readme_bottom:
 static ngx_int_t
 ngx_http_fancyindex_handler(ngx_http_request_t *r)
 {
-    ngx_buf_t                      *content;
+    ngx_buf_t                      *content = NULL;
     ngx_int_t                       rc;
     ngx_chain_t                     out;
     ngx_http_fancyindex_loc_conf_t *alcf;
