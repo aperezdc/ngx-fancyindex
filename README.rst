@@ -1,8 +1,23 @@
-=========================
-Nginx_ Fancy Index module
-=========================
+========================
+Nginx Fancy Index module
+========================
 
 .. contents::
+
+The Fancy Index module makes possible the generation of file listings, like
+the built-in `autoindex <http://wiki.codemongers.com/NginxHttpAutoindexModule>`__
+module does, but adding a touch of style. This is possible because the module
+module allows a certain degree of customization of the generated content:
+
+* Custom headers. Either local or stored remotely (*working*).
+* Custom footers. Either local or stored remotely (*working*).
+* Insert readme files either at the top or the bottom of listings
+  (*partially working*).
+* Add you own CSS style rules (*not yet implemented*).
+
+This module is designed to work with Nginx_, a high performance open source web
+server written by `Igor Sysoev <http://sysoev.ru>`__.
+
 
 Requirements
 ============
@@ -38,6 +53,18 @@ Building
     # make install
 
 5. Configure Nginx_ by using the modules' configuration directives_.
+
+
+Example
+=======
+
+You can test the default built-in style by adding the following lines into
+a ``server`` section in your Nginx_ configuration file::
+
+  location / {
+    fancyindex on;              # Enable fancy indexes.
+    fancyindex_exact_size off;  # Output human-readable file sizes.
+  }
 
 
 Directives
