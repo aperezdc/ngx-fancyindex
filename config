@@ -1,4 +1,7 @@
 # vim:ft=sh:
 ngx_addon_name=ngx_http_fancyindex_module
-HTTP_MODULES="$HTTP_MODULES ngx_http_fancyindex_module"
+
+# XXX: Insert fancyindex module *after* index module!
+#
+HTTP_MODULES="${HTTP_MODULES/ngx_http_index_module/ngx_http_fancyindex_module ngx_http_index_module}"
 NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_http_fancyindex_module.c"
