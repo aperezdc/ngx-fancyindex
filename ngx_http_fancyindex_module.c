@@ -680,10 +680,13 @@ skip_readme_bottom:
 static ngx_int_t
 ngx_http_fancyindex_handler(ngx_http_request_t *r)
 {
-    ngx_buf_t                      *content = NULL;
+    ngx_http_request_t             *sr;
+    ngx_str_t                      *sr_uri;
+    ngx_str_t                       rel_uri;
     ngx_int_t                       rc;
-    ngx_chain_t                     out;
     ngx_http_fancyindex_loc_conf_t *alcf;
+    ngx_chain_t                     out[3] = {
+        { NULL, NULL }, { NULL, NULL}, { NULL, NULL }};
 
 
     if (r->uri.data[r->uri.len - 1] != '/') {
@@ -705,8 +708,10 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-    if ((rc = make_content_buf(r, &content, alcf) != NGX_OK))
+    if ((rc = make_content_buf(r, &out[0].buf, alcf) != NGX_OK))
         return rc;
+
+    out[0].buf->last_in_chain = 1;
 
     r->headers_out.status = NGX_HTTP_OK;
     r->headers_out.content_type_len  = ngx_sizeof_ssz("text/html");
@@ -722,10 +727,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
 
     if (alcf->header.len > 0) {
         /* URI is configured, make Nginx take care of with a subrequest. */
-        ngx_http_request_t *sr;
-        ngx_str_t *sr_uri = &alcf->header;
-        ngx_str_t rel_uri;
-        ngx_int_t rc;
+        sr_uri = &alcf->header;
 
         if (*sr_uri->data != '/') {
             /* Relative path */
@@ -763,92 +765,84 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     }
     else {
 add_builtin_header:
-        out.next = NULL;
-        out.buf  = make_header_buf(r);
-        out.buf->last_in_chain = 1;
-        out.buf->last_buf = 0;
+        ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: adding built-in header");
+        /* Make space before */
+        out[1].next = out[0].next;
+        out[1].buf  = out[0].buf;
+        /* Chain header buffer */
+        out[0].next = &out[1];
+        out[0].buf  = make_header_buf(r);
+    }
 
-        rc = ngx_http_output_filter(r, &out);
+    /* If footer is disabled, chain up footer buffer. */
+    if (alcf->footer.len == 0) {
+        ngx_uint_t last  = (alcf->header.len == 0) ? 2 : 1;
 
-        if (rc != NGX_OK && rc != NGX_AGAIN) {
-            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                    "Header: YOU HIT ME (%i)", rc);
-            return NGX_HTTP_INTERNAL_SERVER_ERROR;
-        }
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: adding built-in footer at %i", last);
+
+        out[last-1].next = &out[last];
+        out[last].buf    = make_footer_buf(r);
+
+        out[last-1].buf->last_in_chain = 0;
+        out[last].buf->last_in_chain   = 1;
+        out[last].buf->last_buf        = 1;
+        /* Send everything with a single call :D */
+        return ngx_http_output_filter(r, &out[0]);
     }
 
     /*
-     * Output listing content.
+     * If we reach here, we were asked to send a custom footer. We need to:
+     * partially send whatever is referenced from out[0] and then send the
+     * footer as a subrequest. If the subrequest fails, we should send the
+     * standard footer as well.
      */
-    out.next = NULL;
-    out.buf = content;
-    out.buf->last_in_chain = 1;
-    out.buf->last_buf = 0;
+    rc = ngx_http_output_filter(r, &out[0]);
 
-    rc = ngx_http_output_filter(r, &out);
-
-    if (rc != NGX_OK && rc != NGX_AGAIN) {
-            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                    "Content: YOU HIT ME (%i)", rc);
+    if (rc != NGX_OK && rc != NGX_AGAIN)
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
 
-    /* Output page footer */
-    if (alcf->footer.len > 0) {
-        /* URI is configured, make Nginx take care of with a subrequest. */
-        ngx_http_request_t *sr;
-        ngx_str_t *sr_uri = &alcf->footer;
-        ngx_str_t rel_uri;
-        ngx_int_t rc;
+    /* URI is configured, make Nginx take care of with a subrequest. */
+    sr_uri = &alcf->footer;
 
-        if (*sr_uri->data != '/') {
-            /* Relative path */
-            rel_uri.len  = r->uri.len + alcf->footer.len;
-            rel_uri.data = ngx_palloc(r->pool, rel_uri.len);
-            if (rel_uri.data == NULL) {
-                return NGX_HTTP_INTERNAL_SERVER_ERROR;
-            }
-            ngx_memcpy(ngx_cpymem(rel_uri.data, r->uri.data, r->uri.len),
-                    alcf->footer.data, alcf->footer.len);
-            sr_uri = &rel_uri;
-        }
-
-        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                "http fancyindex: footer subrequest \"%V\"", sr_uri);
-
-        rc = ngx_http_subrequest(r, sr_uri, NULL, &sr, NULL, 0);
-        if (rc == NGX_ERROR || rc == NGX_DONE) {
-            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                    "http fancyindex: footer subrequest for \"%V\" failed", sr_uri);
-            return rc;
-        }
-
-        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                "http fancyindex: header subrequest status = %i",
-                sr->headers_out.status);
-
-        if (sr->headers_out.status != NGX_HTTP_OK) {
-            /*
-             * XXX: Should we write a message to the error log just in case
-             * we get something different from a 404?
-             */
-            goto add_builtin_footer;
-        }
-    }
-    else {
-add_builtin_footer:
-        out.next = NULL;
-        out.buf  = make_footer_buf(r);
-        out.buf->last_in_chain = 1;
-        out.buf->last_buf = 0;
-
-        rc = ngx_http_output_filter(r, &out);
-
-        if (rc != NGX_OK && rc != NGX_AGAIN) {
-            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                    "Footer: YOU HIT ME (%i)", rc);
+    if (*sr_uri->data != '/') {
+        /* Relative path */
+        rel_uri.len  = r->uri.len + alcf->footer.len;
+        rel_uri.data = ngx_palloc(r->pool, rel_uri.len);
+        if (rel_uri.data == NULL) {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
+        ngx_memcpy(ngx_cpymem(rel_uri.data, r->uri.data, r->uri.len),
+                alcf->footer.data, alcf->footer.len);
+        sr_uri = &rel_uri;
+    }
+
+    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+            "http fancyindex: footer subrequest \"%V\"", sr_uri);
+
+    rc = ngx_http_subrequest(r, sr_uri, NULL, &sr, NULL, 0);
+    if (rc == NGX_ERROR || rc == NGX_DONE) {
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: footer subrequest for \"%V\" failed", sr_uri);
+        return rc;
+    }
+
+    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+            "http fancyindex: header subrequest status = %i",
+            sr->headers_out.status);
+
+    if (sr->headers_out.status != NGX_HTTP_OK) {
+        /*
+         * XXX: Should we write a message to the error log just in case
+         * we get something different from a 404?
+         */
+        out[0].next = NULL;
+        out[0].buf  = make_footer_buf(r);
+        out[0].buf->last_in_chain = 1;
+        out[0].buf->last_buf = 1;
+        /* Directly send out the builtin footer */
+        return ngx_http_output_filter(r, &out[0]);
     }
 
     return (r != r->main) ? rc : ngx_http_send_special(r, NGX_HTTP_LAST);

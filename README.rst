@@ -116,6 +116,15 @@ fancyindex_footer
   If set to an empty string, the default footer supplied by the module will
   be sent.
 
+.. warning:: When inserting custom header/footer a subrequest will be
+   issued so potentially any URL can be used as source for them. Although it
+   will work with external URLs, only using internal ones is supported.
+   External URLs are totally untested and using them will make Nginx_ block
+   while waiting for the subrequest to complete. If you feel like external
+   header/footer is a must-have for you, please
+   `let me know <mailto:adrianperez@udc.es>`__.
+
+
 fancyindex_readme
 ~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_readme path*
