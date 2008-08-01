@@ -426,7 +426,7 @@ make_content_buf(
         entry->mtime   = ngx_de_mtime(&dir);
         entry->size    = ngx_de_size(&dir);
         entry->utf_len = (r->utf8)
-            ?  ngx_utf_length(entry->name.data, entry->name.len)
+            ?  ngx_utf8_length(entry->name.data, entry->name.len)
             : len;
     }
 
@@ -568,7 +568,8 @@ skip_readme_top:
                 copy = NGX_HTTP_FANCYINDEX_NAME_LEN + 1;
             }
 
-            b->last = ngx_utf_cpystrn(b->last, entry[i].name.data, copy);
+            b->last = ngx_utf8_cpystrn(b->last, entry[i].name.data,
+                                          copy, entry[i].name.len);
             last = b->last;
 
         } else {
