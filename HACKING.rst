@@ -26,5 +26,8 @@ is known to work flawlessly. Just do::
 
   $ awk -f template.awk template.html > template.h
 
+If your copy of ``awk`` is not the GNU implementation, you will need to
+install it and use ``gawk`` instead in the command line above.
+
 .. vim: spell spelllang=en expandtab
 
