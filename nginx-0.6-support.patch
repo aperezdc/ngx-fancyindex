@@ -1,0 +1,23 @@
+=== modified file 'ngx_http_fancyindex_module.c'
+--- ngx_http_fancyindex_module.c	2008-09-11 17:55:52 +0000
++++ ngx_http_fancyindex_module.c	2008-12-10 01:33:43 +0000
+@@ -383,7 +383,7 @@
+         entry->mtime   = ngx_de_mtime(&dir);
+         entry->size    = ngx_de_size(&dir);
+         entry->utf_len = (r->utf8)
+-            ?  ngx_utf8_length(entry->name.data, entry->name.len)
++            ?  ngx_utf_length(entry->name.data, entry->name.len)
+             : len;
+     }
+ 
+@@ -478,8 +478,7 @@
+                 copy = NGX_HTTP_FANCYINDEX_NAME_LEN + 1;
+             }
+ 
+-            b->last = ngx_utf8_cpystrn(b->last, entry[i].name.data,
+-                                          copy, entry[i].name.len);
++            b->last = ngx_utf_cpystrn(b->last, entry[i].name.data, copy);
+             last = b->last;
+ 
+         } else {
+
