@@ -11,8 +11,6 @@ module allows a certain degree of customization of the generated content:
 
 * Custom headers. Either local or stored remotely (*working*).
 * Custom footers. Either local or stored remotely (*working*).
-* Insert readme files either at the top or the bottom of listings
-  (*partially working*).
 * Add you own CSS style rules (*not yet implemented*).
 
 This module is designed to work with Nginx_, a high performance open source web
