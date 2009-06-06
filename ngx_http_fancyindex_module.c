@@ -382,7 +382,8 @@ make_content_buf(
         entry->dir     = ngx_de_is_dir(&dir);
         entry->mtime   = ngx_de_mtime(&dir);
         entry->size    = ngx_de_size(&dir);
-        entry->utf_len = (r->utf8)
+        entry->utf_len = (r->headers_out.charset.len == 5 &&
+                ngx_strncasecmp(r->headers_out.charset.data, (u_char*) "utf-8", 5) == 0)
             ?  ngx_utf8_length(entry->name.data, entry->name.len)
             : len;
     }
