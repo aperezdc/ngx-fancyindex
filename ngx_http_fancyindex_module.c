@@ -354,9 +354,9 @@ make_content_buf(
                 ngx_int_t err = ngx_errno;
 
                 if (err != NGX_ENOENT) {
-                    ngx_log_error(NGX_LOG_CRIT, r->connection->log, err,
+                    ngx_log_error(NGX_LOG_ERR, r->connection->log, err,
                             ngx_de_info_n " \"%s\" failed", filename);
-                    return ngx_http_fancyindex_error(r, &dir, &path);
+                    continue;
                 }
 
                 if (ngx_de_link_info(filename, &dir) == NGX_FILE_ERROR) {
