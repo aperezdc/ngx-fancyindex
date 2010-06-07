@@ -591,6 +591,11 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     }
 
     /* TODO: Win32 */
+#if defined(nginx_version) && nginx_version < 8038
+    if (r->zero_in_uri) {
+        return NGX_DECLINED;
+    }
+#endif
 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
         return NGX_DECLINED;
