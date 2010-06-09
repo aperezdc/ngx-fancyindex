@@ -19,7 +19,12 @@ server written by `Igor Sysoev <http://sysoev.ru>`__.
 
 Requirements
 ============
-* Sources for Nginx_ 0.6.x, and its requirements.
+* Sources for Nginx_ 0.8.x, and its requirements.
+
+  - The module compiles with 0.7.x versions as well.
+
+  - It _might_ compile with 0.6.x applying "nginx-0.6-support.patch", YMMV.
+
 * Patience, and some Coffee™.
 
 
@@ -28,7 +33,7 @@ Building
 
 1. Unpack the Nginx_ sources::
 
-    $ gunzip -c nginx-0.6.6.tar.gz | tar -xvf -
+    $ gunzip -c nginx-?.?.?.tar.gz | tar -xvf -
 
 2. Unpack the sources for the fancy indexing module::
 
@@ -120,49 +125,7 @@ fancyindex_footer
    External URLs are totally untested and using them will make Nginx_ block
    while waiting for the subrequest to complete. If you feel like external
    header/footer is a must-have for you, please
-   `let me know <mailto:adrianperez@udc.es>`__.
-
-
-fancyindex_readme
-~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_readme path*
-:Default: fancyindex_readme ""
-:Context: http, server, location
-:Description:
-  Specifies which file should be inserted alongside with directory listings.
-  If set to an empty string, no extra textual content is included. See
-  `fancyindex_readme_mode`_ in order to learn more about how the readme
-  file may be included.
-
-fancyindex_readme_mode
-~~~~~~~~~~~~~~~~~~~~~~
-:Syntax:
-  *fancyindex_readme_mode* *pre* | *asis* | *top* | *bottom* | *div* ...
-:Default: fancyindex_readme_mode top
-:Context: http, server, location
-:Description:
-  Controls how to include the readme file specified by `fancyindex_readme`_.
-  Available options are:
-
-    pre
-      Send included readme file inside a preformatted text block (i.e. an
-      HTML ``<pre>`` element.
-    asis
-      Send included readme file “as-is”, i.e. without altering its contents.
-      This is useful to include raw HTML snippets in the generated listings.
-    top
-      Place readme file contents at the top, before the listings.
-    bottom
-      Place readme file contents at the bottom, after the listings.
-    div
-      Wrap up all the text generated for the readme (including the enclosing
-      ``<pre>`` element, if configured) inside a ``<div>`` element. The
-      layer will have the ``readme`` CSS class set.
-    iframe
-      Insert an ``<iframe>`` element which references the readme file
-      instead if inlining it in the generated file index. Note that this
-      will instruct the client to perform an additional request in order to
-      fetch the contents of the frame.
+   `let me know <mailto:aperez@connectical.com>`__.
 
 
 .. _nginx: http://nginx.net
