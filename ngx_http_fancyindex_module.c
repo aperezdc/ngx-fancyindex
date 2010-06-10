@@ -45,6 +45,7 @@ typedef struct {
 
     ngx_str_t  header;       /**< File name for header, or empty if none. */
     ngx_str_t  footer;       /**< File name for footer, or empty if none. */
+    ngx_str_t  css_href;     /**< Link to a CSS stylesheet, or empty if none. */
 } ngx_http_fancyindex_loc_conf_t;
 
 
@@ -111,11 +112,7 @@ static char *ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf,
  * above).
  */
 static ngx_inline ngx_buf_t*
-    make_header_buf(ngx_http_request_t *r)
-    ngx_force_inline;
-
-static ngx_inline ngx_buf_t*
-    make_header_buf(ngx_http_request_t *r)
+    make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
     ngx_force_inline;
 
 static ngx_inline ngx_buf_t*
@@ -161,6 +158,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       offsetof(ngx_http_fancyindex_loc_conf_t, footer),
       NULL },
 
+    { ngx_string("fancyindex_css_href"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_str_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, css_href),
+      NULL },
+
     ngx_null_command
 };
 
@@ -197,23 +201,45 @@ ngx_module_t  ngx_http_fancyindex_module = {
 
 
 
+static const ngx_str_t css_href_pre =
+    ngx_string("<link rel=\"stylesheet\" href=\"");
+static const ngx_str_t css_href_post =
+    ngx_string("\" type=\"text/css\"/>\n");
+
 
 static ngx_inline ngx_buf_t*
-make_header_buf(ngx_http_request_t *r)
+make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
 {
     size_t blen = r->uri.len
         + ngx_sizeof_ssz(t01_head1)
         + ngx_sizeof_ssz(t02_head2)
-        + ngx_sizeof_ssz(t03_body1)
+        + ngx_sizeof_ssz(t03_head3)
+        + ngx_sizeof_ssz(t04_body1)
         ;
+
+    if (css_href.len) {
+        blen += css_href_pre.len \
+              + css_href.len \
+              + css_href_post.len
+              ;
+    }
+
     ngx_buf_t *b = ngx_create_temp_buf(r->pool, blen);
 
     if (b == NULL) goto bailout;
 
     b->last = ngx_cpymem_ssz(b->last, t01_head1);
-    b->last = ngx_cpymem_str(b->last, r->uri);
+
+    if (css_href.len) {
+        b->last = ngx_cpymem_str(b->last, css_href_pre);
+        b->last = ngx_cpymem_str(b->last, css_href);
+        b->last = ngx_cpymem_str(b->last, css_href_post);
+    }
+
     b->last = ngx_cpymem_ssz(b->last, t02_head2);
-    b->last = ngx_cpymem_ssz(b->last, t03_body1);
+    b->last = ngx_cpymem_str(b->last, r->uri);
+    b->last = ngx_cpymem_ssz(b->last, t03_head3);
+    b->last = ngx_cpymem_ssz(b->last, t04_body1);
 
 bailout:
     return b;
@@ -228,11 +254,11 @@ make_footer_buf(ngx_http_request_t *r)
      * TODO: Make this buffer static (i.e. readonly and reusable from
      * one request to another.
      */
-    ngx_buf_t *b = ngx_create_temp_buf(r->pool, ngx_sizeof_ssz(t07_foot1));
+    ngx_buf_t *b = ngx_create_temp_buf(r->pool, ngx_sizeof_ssz(t08_foot1));
 
     if (b == NULL) goto bailout;
 
-    b->last = ngx_cpymem_ssz(b->last, t07_foot1);
+    b->last = ngx_cpymem_ssz(b->last, t08_foot1);
 
 bailout:
     return b;
@@ -397,9 +423,9 @@ make_content_buf(
      * Calculate needed buffer length.
      */
     len = r->uri.len
-        + ngx_sizeof_ssz(t04_body2)
-        + ngx_sizeof_ssz(t05_list1)
-        + ngx_sizeof_ssz(t06_list2)
+        + ngx_sizeof_ssz(t05_body2)
+        + ngx_sizeof_ssz(t06_list1)
+        + ngx_sizeof_ssz(t07_list2)
         ;
 
     entry = entries.elts;
@@ -438,8 +464,8 @@ make_content_buf(
     }
 
     b->last = ngx_cpymem_str(b->last, r->uri);
-    b->last = ngx_cpymem_ssz(b->last, t04_body2);
-    b->last = ngx_cpymem_ssz(b->last, t05_list1);
+    b->last = ngx_cpymem_ssz(b->last, t05_body2);
+    b->last = ngx_cpymem_ssz(b->last, t06_list1);
 
     tp = ngx_timeofday();
 
@@ -566,7 +592,7 @@ make_content_buf(
     }
 
     /* Output table bottom */
-    b->last = ngx_cpymem_ssz(b->last, t06_list2);
+    b->last = ngx_cpymem_ssz(b->last, t07_list2);
 
     *pb = b;
     return NGX_OK;
@@ -671,7 +697,7 @@ add_builtin_header:
         out[1].buf  = out[0].buf;
         /* Chain header buffer */
         out[0].next = &out[1];
-        out[0].buf  = make_header_buf(r);
+        out[0].buf  = make_header_buf(r, alcf->css_href);
     }
 
     /* If footer is disabled, chain up footer buffer. */

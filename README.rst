@@ -127,6 +127,16 @@ fancyindex_footer
    header/footer is a must-have for you, please
    `let me know <mailto:aperez@connectical.com>`__.
 
+fancyindex_css_href
+~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_css_href uri*
+:Default: fancyindex_css_href ""
+:Context: http, server, location
+:Description:
+  Allows inserting a link to a CSS style sheet in generated listings. The
+  provided *uri* parameter will be inserted as-is in a ``<link>`` HTML tag.
+  The link is inserted after the built-in CSS rules, so you can override the
+  default styles.
 
 .. _nginx: http://nginx.net
 
