@@ -46,6 +46,8 @@ typedef struct {
     ngx_str_t  header;       /**< File name for header, or empty if none. */
     ngx_str_t  footer;       /**< File name for footer, or empty if none. */
     ngx_str_t  css_href;     /**< Link to a CSS stylesheet, or empty if none. */
+
+    ngx_array_t *ignore;     /**< List of files to ignore in listings. */
 } ngx_http_fancyindex_loc_conf_t;
 
 
@@ -106,6 +108,10 @@ static void *ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf);
 static char *ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf,
     void *parent, void *child);
 
+static char *ngx_http_fancyindex_ignore(ngx_conf_t    *cf,
+                                        ngx_command_t *cmd,
+                                        void          *conf);
+
 /*
  * These are used only once per handler invocation. We can tell GCC to
  * inline them always, if possible (see how ngx_force_inline is defined
@@ -163,6 +169,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       ngx_conf_set_str_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, css_href),
+      NULL },
+
+    { ngx_string("fancyindex_ignore"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
+      ngx_http_fancyindex_ignore,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
       NULL },
 
     ngx_null_command
@@ -360,6 +373,35 @@ make_content_buf(
 
         if (ngx_de_name(&dir)[0] == '.')
             continue;
+
+#if NGX_PCRE
+        {
+            ngx_str_t str = { len, ngx_de_name(&dir) };
+
+            if (alcf->ignore && ngx_regex_exec_array(alcf->ignore, &str,
+                                                     r->connection->log)
+                != NGX_DECLINED)
+            {
+                continue;
+            }
+        }
+#else /* !NGX_PCRE */
+        if (alcf->ignore) {
+            u_int match_found = 0;
+            ngx_str_t *s = alcf->ignore->elts;
+
+            for (i = 0; i < alcf->ignore->nelts; i++, s++) {
+                if (ngx_strcmp(ngx_de_name(&dir), s->data) == 0) {
+                    match_found = 1;
+                    break;
+                }
+            }
+
+            if (match_found) {
+                continue;
+            }
+        }
+#endif /* NGX_PCRE */
 
         if (!dir.valid_info) {
             /* 1 byte for '/' and 1 byte for terminating '\0' */
@@ -830,6 +872,7 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
     conf->enable = NGX_CONF_UNSET;
     conf->localtime = NGX_CONF_UNSET;
     conf->exact_size = NGX_CONF_UNSET;
+    conf->ignore = NGX_CONF_UNSET_PTR;
 
     return conf;
 }
@@ -848,7 +891,84 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_str_value(conf->header, prev->header, "");
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");
 
+    ngx_conf_merge_ptr_value(conf->ignore, prev->ignore, NULL);
+
     return NGX_CONF_OK;
+}
+
+
+static char*
+ngx_http_fancyindex_ignore(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
+{
+    ngx_http_fancyindex_loc_conf_t *alcf = conf;
+    ngx_str_t *value;
+
+#if (NGX_PCRE)
+    ngx_uint_t          i;
+    ngx_regex_elt_t    *re;
+    ngx_regex_compile_t rc;
+    u_char              errstr[NGX_MAX_CONF_ERRSTR];
+
+    if (alcf->ignore == NGX_CONF_UNSET_PTR) {
+        alcf->ignore = ngx_array_create(cf->pool, 2, sizeof(ngx_regex_elt_t));
+        if (alcf->ignore == NULL) {
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    value = cf->args->elts;
+
+    ngx_memzero(&rc, sizeof(ngx_regex_compile_t));
+
+    rc.err.data = errstr;
+    rc.err.len  = NGX_MAX_CONF_ERRSTR;
+    rc.pool     = cf->pool;
+
+    for (i = 1; i < cf->args->nelts; i++) {
+        re = ngx_array_push(alcf->ignore);
+        if (re == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        rc.pattern = value[i];
+        rc.options = NGX_REGEX_CASELESS;
+
+        if (ngx_regex_compile(&rc) != NGX_OK) {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "%V", &rc.err);
+            return NGX_CONF_ERROR;
+        }
+
+        re->name  = value[i].data;
+        re->regex = rc.regex;
+    }
+
+    return NGX_CONF_OK;
+#else /* !NGX_PCRE */
+    ngx_uint_t i;
+    ngx_str_t *str;
+
+    if (alcf->ignore == NGX_CONF_UNSET_PTR) {
+        alcf->ignore = ngx_array_create(cf->pool, 2, sizeof(ngx_str_t));
+        if (alcf->ignore == NULL) {
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    value = cf->args->elts;
+
+    for (i = 1; i < cf->args->nelts; i++) {
+        str = ngx_array_push(alcf->ignore);
+        if (str == NULL) {
+            return NGX_CONF_ERROR;
+        }
+
+        str->data = value[i].data;
+        str->len  = value[i].len;
+    }
+
+    return NGX_CONF_OK;
+#endif /* NGX_PCRE */
+
 }
 
 

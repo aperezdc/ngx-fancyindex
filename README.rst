@@ -138,6 +138,16 @@ fancyindex_css_href
   The link is inserted after the built-in CSS rules, so you can override the
   default styles.
 
+fancyindex_ignore
+~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_ignore string1 [string2 [... stringN]]*
+:Default: No default.
+:Context: http, server, location
+:Description:
+  Specifies a list of file names which will be not be shown in generated
+  listings. If Nginx was built with PCRE support strings are interpreted as
+  regular expressions.
+
 .. _nginx: http://nginx.net
 
 .. vim:ft=rst:spell:spelllang=en:
