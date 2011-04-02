@@ -125,7 +125,7 @@ fancyindex_footer
    External URLs are totally untested and using them will make Nginx_ block
    while waiting for the subrequest to complete. If you feel like external
    header/footer is a must-have for you, please
-   `let me know <mailto:aperez@connectical.com>`__.
+   `let me know <mailto:aperez@igalia.com>`__.
 
 fancyindex_css_href
 ~~~~~~~~~~~~~~~~~~~

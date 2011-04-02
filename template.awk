@@ -1,6 +1,6 @@
 #! /usr/bin/awk -f
 #
-# Copyright © Adrian Perez <adrianperez@udc.es>
+# Copyright © Adrian Perez <aperez@igalia.com>
 #
 # Converts an HTML template into a C header suitable for inclusion.
 # Take a look at the HACKING.rst file to know how to use it :-)
