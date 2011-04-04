@@ -112,6 +112,9 @@ static char *ngx_http_fancyindex_ignore(ngx_conf_t    *cf,
                                         ngx_command_t *cmd,
                                         void          *conf);
 
+static uintptr_t
+    ngx_fancyindex_escape_uri(u_char *dst, u_char*src, size_t size);
+
 /*
  * These are used only once per handler invocation. We can tell GCC to
  * inline them always, if possible (see how ngx_force_inline is defined
@@ -218,6 +221,81 @@ static const ngx_str_t css_href_pre =
     ngx_string("<link rel=\"stylesheet\" href=\"");
 static const ngx_str_t css_href_post =
     ngx_string("\" type=\"text/css\"/>\n");
+
+
+static uintptr_t
+ngx_fancyindex_escape_uri(u_char *dst, u_char *src, size_t size)
+{
+    /*
+     * The ngx_escape_uri() function will not escape colons or the
+     * ? character, which signals the beginning of the query string.
+     * So we handle those characters ourselves.
+     *
+     * TODO: Get rid of this once ngx_escape_uri() works as expected!
+     */
+
+    u_int escapes = 0;
+    u_char *psrc = src;
+    size_t psize = size;
+
+    while (psize--) {
+        switch (*psrc++) {
+            case ':':
+            case '?':
+                escapes++;
+                break;
+        }
+    }
+
+    if (dst == NULL) {
+        return escapes + ngx_escape_uri(NULL, src, size, NGX_ESCAPE_HTML);
+    }
+    else if (escapes == 0) {
+        /* No need to do extra escaping, avoid the temporary buffer */
+        return ngx_escape_uri(dst, src, size, NGX_ESCAPE_HTML);
+    }
+    else {
+        uintptr_t uescapes = ngx_escape_uri(NULL, src, size, NGX_ESCAPE_HTML);
+        size_t bufsz = size + 2 * uescapes;
+
+        /*
+         * GCC and CLANG both support stack-allocated variable length
+         * arrays. Take advantage of that to avoid a malloc-free cycle.
+         */
+#if defined(__GNUC__) || defined(__clang__)
+        u_char cbuf[bufsz];
+        u_char *buf = cbuf;
+#else  /* __GNUC__ || __clang__ */
+        u_char *buf = (u_char*) malloc(sizeof(u_char) * bufsz);
+#endif /* __GNUC__ || __clang__ */
+
+        ngx_escape_uri(buf, src, size, NGX_ESCAPE_HTML);
+
+        while (bufsz--) {
+            switch (*buf) {
+                case ':':
+                    *dst++ = '%';
+                    *dst++ = '3';
+                    *dst++ = 'A';
+                    break;
+                case '?':
+                    *dst++ = '%';
+                    *dst++ = '3';
+                    *dst++ = 'F';
+                    break;
+                default:
+                    *dst++ = *buf;
+            }
+            buf++;
+        }
+
+#if !defined(__GNUC__) && !defined(__clang__)
+        free(buf);
+#endif /* !__GNUC__ && !__clang__ */
+
+        return escapes + uescapes;
+    }
+}
 
 
 static ngx_inline ngx_buf_t*
@@ -444,8 +522,9 @@ make_content_buf(
             return ngx_http_fancyindex_error(r, &dir, &path);
 
         ngx_cpystrn(entry->name.data, ngx_de_name(&dir), len + 1);
-        entry->escape = 2 * ngx_escape_uri(NULL,
-                ngx_de_name(&dir), len, NGX_ESCAPE_HTML);
+        entry->escape = 2 * ngx_fancyindex_escape_uri(NULL,
+                                                      ngx_de_name(&dir),
+                                                      len);
 
         entry->dir     = ngx_de_is_dir(&dir);
         entry->mtime   = ngx_de_mtime(&dir);
@@ -522,8 +601,9 @@ make_content_buf(
         b->last = ngx_cpymem_ssz(b->last, "\"><td><a href=\"");
 
         if (entry[i].escape) {
-            ngx_escape_uri(b->last, entry[i].name.data, entry[i].name.len,
-                           NGX_ESCAPE_HTML);
+            ngx_fancyindex_escape_uri(b->last,
+                                      entry[i].name.data,
+                                      entry[i].name.len);
 
             b->last += entry[i].name.len + entry[i].escape;
 
