@@ -81,15 +81,16 @@ fancyindex
 :Description:
   Enables or disables fancy directory indexes.
 
-fancyindex_localtime
-~~~~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_localtime* [*on* | *off*]
-:Default: fancyindex_localtime off
+fancyindex_css_href
+~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_css_href uri*
+:Default: fancyindex_css_href ""
 :Context: http, server, location
 :Description:
-  Defines how to represent file sizes in the directory listing; either
-  accurately, or rounding off to the kilobyte, the megabyte and the
-  gigabyte.
+  Allows inserting a link to a CSS style sheet in generated listings. The
+  provided *uri* parameter will be inserted as-is in a ``<link>`` HTML tag.
+  The link is inserted after the built-in CSS rules, so you can override the
+  default styles.
 
 fancyindex_exact_size
 ~~~~~~~~~~~~~~~~~~~~~
@@ -97,17 +98,9 @@ fancyindex_exact_size
 :Default: fancyindex_exact_size on
 :Context: http, server, location
 :Description:
-  Enables showing file times as local time. Default is “off” (GMT time).
-
-fancyindex_header
-~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_header path*
-:Default: fancyindex_header ""
-:Context: http, server, location
-:Description:
-  Specifies which file should be inserted at the head of directory listings.
-  If set to an empty string, the default header supplied by the module will
-  be sent.
+  Defines how to represent file sizes in the directory listing; either
+  accurately, or rounding off to the kilobyte, the megabyte and the
+  gigabyte.
 
 fancyindex_footer
 ~~~~~~~~~~~~~~~~~
@@ -127,16 +120,15 @@ fancyindex_footer
    header/footer is a must-have for you, please
    `let me know <mailto:aperez@igalia.com>`__.
 
-fancyindex_css_href
-~~~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_css_href uri*
-:Default: fancyindex_css_href ""
+fancyindex_header
+~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_header path*
+:Default: fancyindex_header ""
 :Context: http, server, location
 :Description:
-  Allows inserting a link to a CSS style sheet in generated listings. The
-  provided *uri* parameter will be inserted as-is in a ``<link>`` HTML tag.
-  The link is inserted after the built-in CSS rules, so you can override the
-  default styles.
+  Specifies which file should be inserted at the head of directory listings.
+  If set to an empty string, the default header supplied by the module will
+  be sent.
 
 fancyindex_ignore
 ~~~~~~~~~~~~~~~~~
@@ -148,7 +140,14 @@ fancyindex_ignore
   listings. If Nginx was built with PCRE support strings are interpreted as
   regular expressions.
 
+fancyindex_localtime
+~~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_localtime* [*on* | *off*]
+:Default: fancyindex_localtime off
+:Context: http, server, location
+:Description:
+  Enables showing file times as local time. Default is “off” (GMT time).
+
 .. _nginx: http://nginx.net
 
 .. vim:ft=rst:spell:spelllang=en:
-
