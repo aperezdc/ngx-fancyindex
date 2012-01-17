@@ -5,13 +5,13 @@ Nginx Fancy Index module
 .. contents::
 
 The Fancy Index module makes possible the generation of file listings, like
-the built-in `autoindex <http://wiki.codemongers.com/NginxHttpAutoindexModule>`__
+the built-in `autoindex <http://wiki.nginx.org/NginxHttpAutoindexModule>`__
 module does, but adding a touch of style. This is possible because the module
 module allows a certain degree of customization of the generated content:
 
-* Custom headers. Either local or stored remotely (*working*).
-* Custom footers. Either local or stored remotely (*working*).
-* Add you own CSS style rules (*not yet implemented*).
+* Custom headers. Either local or stored remotely.
+* Custom footers. Either local or stored remotely.
+* Add you own CSS style rules.
 
 This module is designed to work with Nginx_, a high performance open source web
 server written by `Igor Sysoev <http://sysoev.ru>`__.
@@ -19,13 +19,11 @@ server written by `Igor Sysoev <http://sysoev.ru>`__.
 
 Requirements
 ============
-* Sources for Nginx_ 0.8.x, and its requirements.
 
-  - The module compiles with 0.7.x versions as well.
-
-  - It _might_ compile with 0.6.x applying "nginx-0.6-support.patch", YMMV.
-
-* Patience, and some Coffee™.
+You will need the sources for Nginx_. Any version starting from the 0.7
+series onwards will work.  Note that the modules *might* compile with
+versions in the 0.6 series by applying ``nginx-0.6-support.patch``, but this
+is unsupported (YMMV).
 
 
 Building
@@ -44,7 +42,7 @@ Building
    ``--add-module`` flag pointing to the directory which contains the source
    of the fancy indexing module::
 
-    $ cd nginx-0.6.6
+    $ cd nginx-?.?.?
     $ ./configure --add-module=../nginx-fancyindex-?.?.?  [extra desired options]
 
 4. Build and install the software::
