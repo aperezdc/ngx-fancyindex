@@ -357,7 +357,7 @@ bailout:
 
 
 
-static inline ngx_int_t
+static ngx_inline ngx_int_t
 make_content_buf(
         ngx_http_request_t *r, ngx_buf_t **pb,
         ngx_http_fancyindex_loc_conf_t *alcf)
