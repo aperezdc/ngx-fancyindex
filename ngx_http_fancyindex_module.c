@@ -803,8 +803,8 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                 "http fancyindex: header subrequest status = %i",
                 sr->headers_out.status);
-
-        if (sr->headers_out.status != NGX_HTTP_OK) {
+	/* ngx_http_subrequest in 1.1.16 returns NGX_OK(0), not NGX_HTTP_OK(200) */
+        if (sr->headers_out.status != NGX_OK) {
             /*
              * XXX: Should we write a message to the error log just in case
              * we get something different from a 404?
@@ -881,6 +881,7 @@ add_builtin_header:
             "http fancyindex: header subrequest status = %i",
             sr->headers_out.status);
 
+    /* see above: ngx_http_subrequest in 1.1.16 resturns NGX_OK (0) not NGX_HTTP_OK (200) */
     if (sr->headers_out.status != NGX_HTTP_OK) {
         /*
          * XXX: Should we write a message to the error log just in case
