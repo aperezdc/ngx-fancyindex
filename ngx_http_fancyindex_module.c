@@ -762,17 +762,15 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
 
     out[0].buf->last_in_chain = 1;
 
-    r->headers_out.status = NGX_HTTP_OK;
+    r->headers_out.status = NGX_OK;
     r->headers_out.content_type_len  = ngx_sizeof_ssz("text/html");
     r->headers_out.content_type.len  = ngx_sizeof_ssz("text/html");
     r->headers_out.content_type.data = (u_char *) "text/html";
 
     rc = ngx_http_send_header(r);
 
-    if (rc == NGX_ERROR || rc > NGX_OK || r->header_only) {
+    if (rc != NGX_OK || r->header_only)
         return rc;
-    }
-
 
     if (alcf->header.len > 0) {
         /* URI is configured, make Nginx take care of with a subrequest. */
