@@ -762,7 +762,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
 
     out[0].buf->last_in_chain = 1;
 
-    r->headers_out.status = NGX_OK;
+    r->headers_out.status = NGX_HTTP_OK;
     r->headers_out.content_type_len  = ngx_sizeof_ssz("text/html");
     r->headers_out.content_type.len  = ngx_sizeof_ssz("text/html");
     r->headers_out.content_type.data = (u_char *) "text/html";
