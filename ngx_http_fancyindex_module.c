@@ -96,11 +96,17 @@ typedef struct {
 
 
 static int ngx_libc_cdecl
-    ngx_http_fancyindex_cmp_entries_name(const void *one, const void *two);
+    ngx_http_fancyindex_cmp_entries_name_desc(const void *one, const void *two);
 static int ngx_libc_cdecl
-    ngx_http_fancyindex_cmp_entries_size(const void *one, const void *two);
+    ngx_http_fancyindex_cmp_entries_size_desc(const void *one, const void *two);
 static int ngx_libc_cdecl
-    ngx_http_fancyindex_cmp_entries_mtime(const void *one, const void *two);
+    ngx_http_fancyindex_cmp_entries_mtime_desc(const void *one, const void *two);
+static int ngx_libc_cdecl
+    ngx_http_fancyindex_cmp_entries_name_asc(const void *one, const void *two);
+static int ngx_libc_cdecl
+    ngx_http_fancyindex_cmp_entries_size_asc(const void *one, const void *two);
+static int ngx_libc_cdecl
+    ngx_http_fancyindex_cmp_entries_mtime_asc(const void *one, const void *two);
 
 static ngx_int_t ngx_http_fancyindex_error(ngx_http_request_t *r,
     ngx_dir_t *dir, ngx_str_t *name);
@@ -369,6 +375,7 @@ make_content_buf(
     ngx_http_fancyindex_entry_t *entry;
 
     int (*sort_cmp_func) (const void*, const void*);
+    ngx_int_t    sort_descending = 0;
 
     off_t        length;
     size_t       len, root, copy, allocated;
@@ -585,24 +592,46 @@ make_content_buf(
 
     /* Sort entries, if needed */
     if (entries.nelts > 1) {
-        sort_cmp_func = ngx_http_fancyindex_cmp_entries_name;
+        /*
+         * Determine the sorting criteria. URL arguments look like:
+         *
+         *    C=x[&O=y]
+         *
+         * Where x={M,S,N} and y={A,D}
+         */
+        if ((r->args.len == 3 || (r->args.len == 7 && r->args.data[3] == '&')) &&
+            r->args.data[0] == 'C' && r->args.data[1] == '=')
+        {
+            /* Determine whether the direction of the sorting */
+            sort_descending = r->args.len == 7
+                           && r->args.data[4] == 'O'
+                           && r->args.data[5] == '='
+                           && r->args.data[6] == 'D';
 
-        /* Determine the sorting criteria */
-        if (r->args.len == 3 && r->args.data[0] == 'C' && r->args.data[1] == '=') {
+            /* Pick the sorting criteria */
             switch (r->args.data[2]) {
                 case 'M': /* Sort by mtime */
-                    sort_cmp_func = ngx_http_fancyindex_cmp_entries_mtime;
+                    sort_cmp_func = sort_descending
+                        ? ngx_http_fancyindex_cmp_entries_mtime_desc
+                        : ngx_http_fancyindex_cmp_entries_mtime_asc;
                     break;
                 case 'S': /* Sort by size */
-                    sort_cmp_func = ngx_http_fancyindex_cmp_entries_size;
+                    sort_cmp_func = sort_descending
+                        ? ngx_http_fancyindex_cmp_entries_size_desc
+                        : ngx_http_fancyindex_cmp_entries_size_asc;
                     break;
                 case 'N': /* Sort by name */
                 default:
+                    sort_cmp_func = sort_descending
+                        ? ngx_http_fancyindex_cmp_entries_name_desc
+                        : ngx_http_fancyindex_cmp_entries_name_asc;
                     break;
             }
         }
+        else {
+            sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_asc;
+        }
 
-        /* Any other argument (or no argument): sort by file name */
         ngx_qsort(entry, (size_t) entries.nelts,
                   sizeof(ngx_http_fancyindex_entry_t),
                   sort_cmp_func);
@@ -922,38 +951,34 @@ add_builtin_header:
 
 
 static int ngx_libc_cdecl
-ngx_http_fancyindex_cmp_entries_name(const void *one, const void *two)
+ngx_http_fancyindex_cmp_entries_name_desc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
     ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
 
+    /* move the directories to the start */
     if (first->dir && !second->dir) {
-        /* move the directories to the start */
         return -1;
     }
-
     if (!first->dir && second->dir) {
-        /* move the directories to the start */
         return 1;
     }
 
-    return (int) ngx_strcmp(first->name.data, second->name.data);
+    return (int) ngx_strcmp(second->name.data, first->name.data);
 }
 
 
 static int ngx_libc_cdecl
-ngx_http_fancyindex_cmp_entries_size(const void *one, const void *two)
+ngx_http_fancyindex_cmp_entries_size_desc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
     ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
 
+    /* move the directories to the start */
     if (first->dir && !second->dir) {
-        /* move the directories to the start */
         return -1;
     }
-
     if (!first->dir && second->dir) {
-        /* move the directories to the start */
         return 1;
     }
 
@@ -962,22 +987,74 @@ ngx_http_fancyindex_cmp_entries_size(const void *one, const void *two)
 
 
 static int ngx_libc_cdecl
-ngx_http_fancyindex_cmp_entries_mtime(const void *one, const void *two)
+ngx_http_fancyindex_cmp_entries_mtime_desc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
     ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
 
+    /* move the directories to the start */
     if (first->dir && !second->dir) {
-        /* move the directories to the start */
         return -1;
     }
-
     if (!first->dir && second->dir) {
-        /* move the directories to the start */
         return 1;
     }
 
     return second->mtime - first->mtime;
+}
+
+
+static int ngx_libc_cdecl
+ngx_http_fancyindex_cmp_entries_name_asc(const void *one, const void *two)
+{
+    ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
+    ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
+
+    /* move the directories to the start */
+    if (first->dir && !second->dir) {
+        return -1;
+    }
+    if (!first->dir && second->dir) {
+        return 1;
+    }
+
+    return (int) ngx_strcmp(first->name.data, second->name.data);
+}
+
+
+static int ngx_libc_cdecl
+ngx_http_fancyindex_cmp_entries_size_asc(const void *one, const void *two)
+{
+    ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
+    ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
+
+    /* move the directories to the start */
+    if (first->dir && !second->dir) {
+        return -1;
+    }
+    if (!first->dir && second->dir) {
+        return 1;
+    }
+
+    return first->size - second->size;
+}
+
+
+static int ngx_libc_cdecl
+ngx_http_fancyindex_cmp_entries_mtime_asc(const void *one, const void *two)
+{
+    ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
+    ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
+
+    /* move the directories to the start */
+    if (first->dir && !second->dir) {
+        return -1;
+    }
+    if (!first->dir && second->dir) {
+        return 1;
+    }
+
+    return first->mtime - second->mtime;
 }
 
 
