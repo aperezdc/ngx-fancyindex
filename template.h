@@ -72,8 +72,10 @@ static const u_char t06_list1[] = ""
 "</thead>"
 "\n"
 "<tbody>"
+;
+static const u_char t_parentdir_entry[] = ""
 "<tr class=\"o\">"
-"<td><a href=\"../\">Parent directory/</a></td>"
+"<td><a href=\"../?C=N&amp;O=A\">Parent directory/</a></td>"
 "<td>-</td>"
 "<td>-</td>"
 "</tr>"
@@ -93,6 +95,7 @@ static const u_char t08_foot1[] = ""
 	+ nfi_sizeof_ssz(t04_body1) \
 	+ nfi_sizeof_ssz(t05_body2) \
 	+ nfi_sizeof_ssz(t06_list1) \
+	+ nfi_sizeof_ssz(t_parentdir_entry) \
 	+ nfi_sizeof_ssz(t07_list2) \
 	+ nfi_sizeof_ssz(t08_foot1) \
 	)
