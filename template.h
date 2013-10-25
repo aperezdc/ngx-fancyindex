@@ -65,9 +65,9 @@ static const u_char t06_list1[] = ""
 "\n"
 "<thead>"
 "<tr>"
-"<th>File Name</th>"
-"<th>File Size</th>"
-"<th>Date</th>"
+"<th><a href=\"?C=N&O=A\">File Name</a>&nbsp;<a href=\"?C=N&O=D\">&nbsp;↓&nbsp;</a></th>"
+"<th><a href=\"?C=S&O=A\">File Size</a>&nbsp;<a href=\"?C=S&O=D\">&nbsp;↓&nbsp;</a></th>"
+"<th><a href=\"?C=M&O=A\">Date</a>&nbsp;<a href=\"?C=M&O=D\">&nbsp;↓&nbsp;</a></th>"
 "</tr>"
 "</thead>"
 "\n"
@@ -87,12 +87,12 @@ static const u_char t08_foot1[] = ""
 "</html>"
 ;
 #define NFI_TEMPLATE_SIZE (0 \
-	+ nfi_sizeof_ssz(t05_body2) \
-	+ nfi_sizeof_ssz(t06_list1) \
-	+ nfi_sizeof_ssz(t07_list2) \
-	+ nfi_sizeof_ssz(t08_foot1) \
 	+ nfi_sizeof_ssz(t01_head1) \
 	+ nfi_sizeof_ssz(t02_head2) \
 	+ nfi_sizeof_ssz(t03_head3) \
 	+ nfi_sizeof_ssz(t04_body1) \
+	+ nfi_sizeof_ssz(t05_body2) \
+	+ nfi_sizeof_ssz(t06_list1) \
+	+ nfi_sizeof_ssz(t07_list2) \
+	+ nfi_sizeof_ssz(t08_foot1) \
 	)
