@@ -12,6 +12,8 @@ module allows a certain degree of customization of the generated content:
 * Custom headers. Either local or stored remotely.
 * Custom footers. Either local or stored remotely.
 * Add you own CSS style rules.
+* Allow choosing to sort elements by name (default), modification time, or
+  size; both ascending (default), or descending.
 
 This module is designed to work with Nginx_, a high performance open source web
 server written by `Igor Sysoev <http://sysoev.ru>`__.
