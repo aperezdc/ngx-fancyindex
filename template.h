@@ -79,6 +79,7 @@ static const u_char t_parentdir_entry[] = ""
 "<td>-</td>"
 "<td>-</td>"
 "</tr>"
+"\n"
 ;
 static const u_char t07_list2[] = ""
 "</tbody>"
