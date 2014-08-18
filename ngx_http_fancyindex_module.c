@@ -43,6 +43,7 @@ typedef struct {
     ngx_uint_t default_sort; /**< Default sort criterion. */
     ngx_flag_t localtime;    /**< File mtime dates are sent in local time. */
     ngx_flag_t exact_size;   /**< Sizes are sent always in bytes. */
+    ngx_uint_t name_length;  /**< Maximum length of file names in bytes. */
 
     ngx_str_t  header;       /**< File name for header, or empty if none. */
     ngx_str_t  footer;       /**< File name for footer, or empty if none. */
@@ -70,7 +71,6 @@ static ngx_conf_enum_t ngx_http_fancyindex_sort_criteria[] = {
 
 
 #define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
-#define NGX_HTTP_FANCYINDEX_NAME_LEN     50
 
 
 /**
@@ -186,6 +186,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       ngx_conf_set_flag_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, exact_size),
+      NULL },
+
+    { ngx_string("fancyindex_name_length"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_num_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, name_length),
       NULL },
 
     { ngx_string("fancyindex_header"),
@@ -604,7 +611,7 @@ make_content_buf(
             + ngx_sizeof_ssz("?C=x&amp;O=y") /* URL sorting arguments */
             + ngx_sizeof_ssz("\">")
             + entry[i].name.len + entry[i].utf_len
-            + NGX_HTTP_FANCYINDEX_NAME_LEN + ngx_sizeof_ssz("&gt;")
+            + alcf->name_length + ngx_sizeof_ssz("&gt;")
             + ngx_sizeof_ssz("</a></td><td>")
             + 20 /* File size */
             + ngx_sizeof_ssz("</td><td>")
@@ -756,10 +763,10 @@ make_content_buf(
         len = entry[i].utf_len;
 
         if (entry[i].name.len - len) {
-            if (len > NGX_HTTP_FANCYINDEX_NAME_LEN) {
-                copy = NGX_HTTP_FANCYINDEX_NAME_LEN - 3 + 1;
+            if (len > alcf->name_length) {
+                copy = alcf->name_length - 3 + 1;
             } else {
-                copy = NGX_HTTP_FANCYINDEX_NAME_LEN + 1;
+                copy = alcf->name_length + 1;
             }
 
             b->last = ngx_utf8_cpystrn(b->last, entry[i].name.data,
@@ -768,15 +775,15 @@ make_content_buf(
 
         } else {
             b->last = ngx_cpystrn(b->last, entry[i].name.data,
-                                  NGX_HTTP_FANCYINDEX_NAME_LEN + 1);
+                                  alcf->name_length + 1);
             last = b->last - 3;
         }
 
-        if (len > NGX_HTTP_FANCYINDEX_NAME_LEN) {
+        if (len > alcf->name_length) {
             b->last = ngx_cpymem_ssz(last, "..&gt;</a></td><td>");
 
         } else {
-            if (entry[i].dir && NGX_HTTP_FANCYINDEX_NAME_LEN - len > 0) {
+            if (entry[i].dir && alcf->name_length - len > 0) {
                 *b->last++ = '/';
                 len++;
             }
@@ -1172,6 +1179,7 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
     conf->enable       = NGX_CONF_UNSET;
     conf->default_sort = NGX_CONF_UNSET_UINT;
     conf->localtime    = NGX_CONF_UNSET;
+    conf->name_length  = NGX_CONF_UNSET_UINT;
     conf->exact_size   = NGX_CONF_UNSET;
     conf->ignore       = NGX_CONF_UNSET_PTR;
 
@@ -1189,6 +1197,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_uint_value(conf->default_sort, prev->default_sort, NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME);
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
+    ngx_conf_merge_uint_value(conf->name_length, prev->name_length, 50);
 
     ngx_conf_merge_str_value(conf->header, prev->header, "");
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");
