@@ -569,12 +569,12 @@ make_content_buf(
          * Genearated table rows are as follows, unneeded whitespace
          * is stripped out:
          *
-         *   <tr class="X">
+         *   <tr>
          *     <td><a href="U[?sort]">fname</a></td>
          *     <td>size</td><td>date</td>
          *   </tr>
          */
-        len += ngx_sizeof_ssz("<tr class=\"X\"><td><a href=\"")
+        len += ngx_sizeof_ssz("<tr><td><a href=\"")
             + entry[i].name.len + entry[i].escape /* Escaped URL */
             + ngx_sizeof_ssz("?C=x&amp;O=y") /* URL sorting arguments */
             + ngx_sizeof_ssz("\">")
@@ -661,7 +661,7 @@ make_content_buf(
 
     /* "Parent dir" entry, always first */
     b->last = ngx_cpymem_ssz(b->last,
-                             "<tr class=\"o\">"
+                             "<tr>"
                              "<td><a href=\"../");
     if (*sort_url_args) {
         b->last = ngx_cpymem(b->last,
@@ -676,14 +676,7 @@ make_content_buf(
 
     /* Entries for directories and files */
     for (i = 0; i < entries.nelts; i++) {
-        static const char _evenodd[] = { 'e', 'o' };
-        b->last = ngx_cpymem_ssz(b->last, "<tr class=\"");
-        *b->last++ = _evenodd[i & 0x01];
-        /*
-         * Alternative implementation:
-         *   *b->last++ = (i & 0x01) ? 'e' : 'o';
-         */
-        b->last = ngx_cpymem_ssz(b->last, "\"><td><a href=\"");
+        b->last = ngx_cpymem_ssz(b->last, "<tr><td><a href=\"");
 
         if (entry[i].escape) {
             ngx_fancyindex_escape_uri(b->last,
