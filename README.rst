@@ -2,6 +2,10 @@
 Nginx Fancy Index module
 ========================
 
+.. image:: https://drone.io/github.com/aperezdc/ngx-fancyindex/status.png
+   :target: https://drone.io/github.com/aperezdc/ngx-fancyindex/latest
+   :alt: Build Status
+
 .. contents::
 
 The Fancy Index module makes possible the generation of file listings, like
