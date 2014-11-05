@@ -74,6 +74,15 @@ a ``server`` section in your Nginx_ configuration file::
   }
 
 
+Advanced Theming
+~~~~~~~~~~~~~~~~
+
+For a more elaborate example using `fancyindex_header`_ and
+`fancyindex_footer`_ you can check `nice theme
+<https://github.com/TheInsomniac/Nginx-Fancyindex-Theme>`__
+designed by `@TheInsomniac <https://github.com/TheInsomniac>`__.
+
+
 Directives
 ==========
 
