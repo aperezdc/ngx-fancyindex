@@ -94,6 +94,14 @@ fancyindex
 :Description:
   Enables or disables fancy directory indexes.
 
+fancyindex_default_sort
+~~~~~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_default_sort* [*name* | *size* | *date* | *name_desc* | *size_desc* | *date_desc*]
+:Default: fancyindex_default_sort name
+:Context: http, server, location
+:Description:
+  Defines sorting criterion by default.
+
 fancyindex_css_href
 ~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_css_href uri*

@@ -40,6 +40,7 @@
  */
 typedef struct {
     ngx_flag_t enable;       /**< Module is enabled. */
+    ngx_uint_t default_sort; /**< Default sort criterion. */
     ngx_flag_t localtime;    /**< File mtime dates are sent in local time. */
     ngx_flag_t exact_size;   /**< Sizes are sent always in bytes. */
 
@@ -49,6 +50,23 @@ typedef struct {
 
     ngx_array_t *ignore;     /**< List of files to ignore in listings. */
 } ngx_http_fancyindex_loc_conf_t;
+
+#define NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME       0
+#define NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE       1
+#define NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE       2
+#define NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC  3
+#define NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC  4
+#define NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC  5
+
+static ngx_conf_enum_t ngx_http_fancyindex_sort_criteria[] = {
+    { ngx_string("name"), NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME },
+    { ngx_string("size"), NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE },
+    { ngx_string("date"), NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE },
+    { ngx_string("name_desc"), NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC },
+    { ngx_string("size_desc"), NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC },
+    { ngx_string("date_desc"), NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC },
+    { ngx_null_string, 0 }
+};
 
 
 #define NGX_HTTP_FANCYINDEX_PREALLOCATE  50
@@ -148,6 +166,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, enable),
       NULL },
+
+    { ngx_string("fancyindex_default_sort"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+      ngx_conf_set_enum_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, default_sort),
+      &ngx_http_fancyindex_sort_criteria },
 
     { ngx_string("fancyindex_localtime"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
@@ -613,20 +638,24 @@ make_content_buf(
             case 'M': /* Sort by mtime */
                 if (sort_descending) {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_mtime_desc;
-                    sort_url_args = "?C=M&amp;O=D";
+                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC)
+                        sort_url_args = "?C=M&amp;O=D";
                 }
                 else {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_mtime_asc;
-                    sort_url_args = "?C=M&amp;O=A";
+                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE)
+                        sort_url_args = "?C=M&amp;O=A";
                 }
                 break;
             case 'S': /* Sort by size */
                 if (sort_descending) {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_size_desc;
-                    sort_url_args = "?C=S&amp;O=D";
+                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC)
+                        sort_url_args = "?C=S&amp;O=D";
                 }
                 else {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_size_asc;
+                        if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE)
                     sort_url_args = "?C=S&amp;O=A";
                 }
                 break;
@@ -634,16 +663,39 @@ make_content_buf(
             default:
                 if (sort_descending) {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_desc;
-                    sort_url_args = "?C=N&amp;O=D";
+                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC)
+                        sort_url_args = "?C=N&amp;O=D";
                 }
                 else {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_asc;
+                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME)
+                        sort_url_args = "?C=N&amp;O=A";
                 }
                 break;
         }
     }
     else {
-        sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_asc;
+        switch (alcf->default_sort) {
+            case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC:
+                sort_cmp_func = ngx_http_fancyindex_cmp_entries_mtime_desc;
+                break;
+            case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE:
+                sort_cmp_func = ngx_http_fancyindex_cmp_entries_mtime_asc;
+                break;
+            case NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC:
+                sort_cmp_func = ngx_http_fancyindex_cmp_entries_size_desc;
+                break;
+            case NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE:
+                sort_cmp_func = ngx_http_fancyindex_cmp_entries_size_asc;
+                break;
+            case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC:
+                sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_desc;
+                break;
+            case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME:
+            default:
+                sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_asc;
+                break;
+        }
     }
 
     /* Sort entries, if needed */
@@ -1117,10 +1169,11 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
      *    conf->footer.len   = 0
      *    conf->footer.data  = NULL
      */
-    conf->enable = NGX_CONF_UNSET;
-    conf->localtime = NGX_CONF_UNSET;
-    conf->exact_size = NGX_CONF_UNSET;
-    conf->ignore = NGX_CONF_UNSET_PTR;
+    conf->enable       = NGX_CONF_UNSET;
+    conf->default_sort = NGX_CONF_UNSET_UINT;
+    conf->localtime    = NGX_CONF_UNSET;
+    conf->exact_size   = NGX_CONF_UNSET;
+    conf->ignore       = NGX_CONF_UNSET_PTR;
 
     return conf;
 }
@@ -1133,6 +1186,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_fancyindex_loc_conf_t *conf = child;
 
     ngx_conf_merge_value(conf->enable, prev->enable, 0);
+    ngx_conf_merge_uint_value(conf->default_sort, prev->default_sort, NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME);
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
 
