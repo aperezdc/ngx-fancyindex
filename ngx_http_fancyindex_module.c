@@ -1200,7 +1200,7 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
     conf->localtime    = NGX_CONF_UNSET;
     conf->name_length  = NGX_CONF_UNSET_UINT;
     conf->exact_size   = NGX_CONF_UNSET;
-    conf->display_path = NGX_CONF_UNSET;
+    conf->show_path = NGX_CONF_UNSET;
     conf->ignore       = NGX_CONF_UNSET_PTR;
 
     return conf;
