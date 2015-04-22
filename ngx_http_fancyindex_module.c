@@ -43,6 +43,7 @@ typedef struct {
     ngx_uint_t default_sort; /**< Default sort criterion. */
     ngx_flag_t localtime;    /**< File mtime dates are sent in local time. */
     ngx_flag_t exact_size;   /**< Sizes are sent always in bytes. */
+    ngx_flag_t show_path;    /**< Whether to add the path + '</h1>' after the header */
     ngx_uint_t name_length;  /**< Maximum length of file names in bytes. */
 
     ngx_str_t  header;       /**< File name for header, or empty if none. */
@@ -187,7 +188,14 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, exact_size),
       NULL },
-
+     
+    { ngx_string("fancyindex_show_path"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, show_path),
+      NULL },
+      
     { ngx_string("fancyindex_name_length"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
       ngx_conf_set_num_slot,
@@ -588,12 +596,18 @@ make_content_buf(
     /*
      * Calculate needed buffer length.
      */
-    len = r->uri.len
-        + ngx_sizeof_ssz(t05_body2)
-        + ngx_sizeof_ssz(t06_list1)
-        + ngx_sizeof_ssz(t_parentdir_entry)
-        + ngx_sizeof_ssz(t07_list2)
-        ;
+    if(alcf->show_path)
+        len = r->uri.len
+	 + ngx_sizeof_ssz(t05_body2)
+	 + ngx_sizeof_ssz(t06_list1)
+	 + ngx_sizeof_ssz(t_parentdir_entry)
+	 + ngx_sizeof_ssz(t07_list2)
+	 ;
+    else
+        len = ngx_sizeof_ssz(t06_list1)
+	 + ngx_sizeof_ssz(t_parentdir_entry)
+	 + ngx_sizeof_ssz(t07_list2)
+	 ;
 
     entry = entries.elts;
     for (i = 0; i < entries.nelts; i++) {
@@ -711,9 +725,14 @@ make_content_buf(
                   sizeof(ngx_http_fancyindex_entry_t),
                   sort_cmp_func);
     }
-
-    b->last = ngx_cpymem_str(b->last, r->uri);
-    b->last = ngx_cpymem_ssz(b->last, t05_body2);
+    
+    /* Display the path, if needed */
+    if(aclf->show_path){
+        b->last = ngx_cpymem_str(b->last, r->uri);
+        b->last = ngx_cpymem_ssz(b->last, t05_body2);
+    }
+    
+    // Open the table tag
     b->last = ngx_cpymem_ssz(b->last, t06_list1);
 
     tp = ngx_timeofday();
@@ -1181,6 +1200,7 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
     conf->localtime    = NGX_CONF_UNSET;
     conf->name_length  = NGX_CONF_UNSET_UINT;
     conf->exact_size   = NGX_CONF_UNSET;
+    conf->display_path = NGX_CONF_UNSET;
     conf->ignore       = NGX_CONF_UNSET_PTR;
 
     return conf;
@@ -1197,13 +1217,18 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_uint_value(conf->default_sort, prev->default_sort, NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME);
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
+    ngx_conf_merge_value(conf->show_path, prev->show_path, 1);
     ngx_conf_merge_uint_value(conf->name_length, prev->name_length, 50);
 
     ngx_conf_merge_str_value(conf->header, prev->header, "");
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");
 
     ngx_conf_merge_ptr_value(conf->ignore, prev->ignore, NULL);
-
+    
+    // Just check the show_path directive does not interfere with the default header...
+    if(conf->show_path == 0 && conf->header[0] == 0) //stuff[0] == 0 implies stuff is an empty string
+        return NGX_CONF_ERROR;
+    
     return NGX_CONF_OK;
 }
 
