@@ -1226,7 +1226,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_ptr_value(conf->ignore, prev->ignore, NULL);
     
     // Just check the show_path directive does not interfere with the default header...
-    if(conf->show_path == 0 && conf->header->len == 0) //stuff[0] == 0 implies stuff is an empty string
+    if(conf->show_path == 0 && conf->header.len == 0)
         return NGX_CONF_ERROR;
     
     return NGX_CONF_OK;
