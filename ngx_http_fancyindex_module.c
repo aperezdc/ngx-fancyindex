@@ -727,7 +727,7 @@ make_content_buf(
     }
     
     /* Display the path, if needed */
-    if(aclf->show_path){
+    if(alcf->show_path){
         b->last = ngx_cpymem_str(b->last, r->uri);
         b->last = ngx_cpymem_ssz(b->last, t05_body2);
     }
