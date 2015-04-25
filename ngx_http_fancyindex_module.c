@@ -736,7 +736,7 @@ make_content_buf(
     b->last = ngx_cpymem_ssz(b->last, t06_list1);
 
     tp = ngx_timeofday();
-
+    
     /* "Parent dir" entry, always first */
     b->last = ngx_cpymem_ssz(b->last,
                              "<tr>"
@@ -1224,11 +1224,14 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");
 
     ngx_conf_merge_ptr_value(conf->ignore, prev->ignore, NULL);
-    
+
     // Just check the show_path directive does not interfere with the default header...
     if(conf->show_path == 0 && conf->header.len == 0)
+    {
+        ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "FancyIndex : cannot set show_path to off without providing a custom header !");
         return NGX_CONF_ERROR;
-    
+    }
+
     return NGX_CONF_OK;
 }
 
