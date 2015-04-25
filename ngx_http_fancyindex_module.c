@@ -595,6 +595,13 @@ make_content_buf(
         + ngx_sizeof_ssz(t07_list2)
         ;
 
+    /*
+     * If we are a the root of the webserver (URI =  "/" --> length of 1),
+     * do not display the "Parent Directory" link.
+     */
+    if(r->uri.len == 1)
+        len -= ngx_sizeof_ssz(t_parentdir_entry);
+
     entry = entries.elts;
     for (i = 0; i < entries.nelts; i++) {
         /*
@@ -718,20 +725,22 @@ make_content_buf(
 
     tp = ngx_timeofday();
 
-    /* "Parent dir" entry, always first */
-    b->last = ngx_cpymem_ssz(b->last,
-                             "<tr>"
-                             "<td><a href=\"../");
-    if (*sort_url_args) {
-        b->last = ngx_cpymem(b->last,
-                             sort_url_args,
-                             ngx_sizeof_ssz("?C=N&amp;O=A"));
+    /* "Parent dir" entry, always first if displayed */
+    if(r->uri.len > 1){
+         b->last = ngx_cpymem_ssz(b->last,
+	                         "<tr>"
+	                         "<td><a href=\"../");
+         if (*sort_url_args) {
+             b->last = ngx_cpymem(b->last,
+                                 sort_url_args,
+                                 ngx_sizeof_ssz("?C=N&amp;O=A"));
+         }
+         b->last = ngx_cpymem_ssz(b->last,
+                                 "\">Parent directory/</a></td>"
+                                 "<td>-</td>"
+                                 "<td>-</td>"
+                                 "</tr>");
     }
-    b->last = ngx_cpymem_ssz(b->last,
-                             "\">Parent directory/</a></td>"
-                             "<td>-</td>"
-                             "<td>-</td>"
-                             "</tr>");
 
     /* Entries for directories and files */
     for (i = 0; i < entries.nelts; i++) {
