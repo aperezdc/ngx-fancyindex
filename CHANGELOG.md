@@ -15,6 +15,9 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Renames `NEWS.rst` to `CHANGELOG.md`, which follows the recommendations
 	from [Keep a Change Log](http://keepachangelog.com/).
+- Configuring Nginx without the `http_addition_module` will generate a
+  warning during configuration, as it is needed for the `fancyindex_footer`
+  and `fancyindex_header` directives.
 
 
 ## 0.3.4 - 2014-09-03
