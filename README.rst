@@ -31,6 +31,10 @@ series onwards will work.  Note that the modules *might* compile with
 versions in the 0.6 series by applying ``nginx-0.6-support.patch``, but this
 is unsupported (YMMV).
 
+In order to use the fancyindex_header_ and fancyindex_footer_ directives
+you will also need the `ngx_http_addition_module <http://nginx.org/en/docs/http/ngx_http_addition_module.html>`_
+built into Nginx.
+
 
 Building
 ========
@@ -49,7 +53,8 @@ Building
    of the fancy indexing module::
 
     $ cd nginx-?.?.?
-    $ ./configure --add-module=../nginx-fancyindex-?.?.?  [extra desired options]
+    $ ./configure --add-module=../nginx-fancyindex-?.?.? \
+       [--with-http_addition_module] [extra desired options]
 
 4. Build and install the software::
 
@@ -141,6 +146,9 @@ fancyindex_footer
   If set to an empty string, the default footer supplied by the module will
   be sent.
 
+.. note:: Using this directive needs the ngx_http_addition_module_ built
+   into Nginx.
+
 .. warning:: When inserting custom header/footer a subrequest will be
    issued so potentially any URL can be used as source for them. Although it
    will work with external URLs, only using internal ones is supported.
@@ -158,6 +166,9 @@ fancyindex_header
   Specifies which file should be inserted at the head of directory listings.
   If set to an empty string, the default header supplied by the module will
   be sent.
+
+.. note:: Using this directive needs the ngx_http_addition_module_ built
+   into Nginx.
 
 fancyindex_ignore
 ~~~~~~~~~~~~~~~~~
