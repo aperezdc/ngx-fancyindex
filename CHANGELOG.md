@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - New feature: Allow setting the default sort criterion using the
   `fancyindex_default_sort` configuration directive. (Patch by
   Алексей Урбанский).
-- New feature: Allos changing the maximum length of file names, using
+- New feature: Allow changing the maximum length of file names, using
   the `fancyindex_name_length` configuration directive. (Patch by
   Martin Herkt).
 
