@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+### Changed
+- Listings in top-level directories will not generate a "Parent Directory"
+  link as first element of the listing. (Patch by Thomas P.)
 
 
 ### Added
