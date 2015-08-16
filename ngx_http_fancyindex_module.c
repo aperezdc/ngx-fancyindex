@@ -737,16 +737,16 @@ make_content_buf(
     tp = ngx_timeofday();
 
     /* "Parent dir" entry, always first if displayed */
-    if(r->uri.len > 1){
-         b->last = ngx_cpymem_ssz(b->last,
-	                         "<tr>"
-	                         "<td><a href=\"../");
-         if (*sort_url_args) {
-             b->last = ngx_cpymem(b->last,
+    if (r->uri.len > 1) {
+        b->last = ngx_cpymem_ssz(b->last,
+                                 "<tr>"
+                                 "<td><a href=\"../");
+        if (*sort_url_args) {
+            b->last = ngx_cpymem(b->last,
                                  sort_url_args,
                                  ngx_sizeof_ssz("?C=N&amp;O=A"));
-         }
-         b->last = ngx_cpymem_ssz(b->last,
+        }
+        b->last = ngx_cpymem_ssz(b->last,
                                  "\">Parent directory/</a></td>"
                                  "<td>-</td>"
                                  "<td>-</td>"
