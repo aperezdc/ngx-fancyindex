@@ -721,8 +721,9 @@ make_content_buf(
      * If we are a the root of the webserver (URI =  "/" --> length of 1),
      * do not display the "Parent Directory" link.
      */
-    if(r->uri.len == 1)
+    if (r->uri.len == 1) {
         len -= ngx_sizeof_ssz(t_parentdir_entry);
+    }
 
     entry = entries.elts;
     for (i = 0; i < entries.nelts; i++) {
@@ -1068,7 +1069,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
                 "http fancyindex: header subrequest status = %i",
                 sr->headers_out.status);
-	/* ngx_http_subrequest returns NGX_OK(0), not NGX_HTTP_OK(200) */
+        /* ngx_http_subrequest returns NGX_OK(0), not NGX_HTTP_OK(200) */
         if (sr->headers_out.status != NGX_OK) {
             /*
              * XXX: Should we write a message to the error log just in case
