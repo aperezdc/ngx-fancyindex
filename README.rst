@@ -79,13 +79,19 @@ a ``server`` section in your Nginx_ configuration file::
   }
 
 
-Advanced Theming
-~~~~~~~~~~~~~~~~
+Themes
+~~~~~~
 
-For a more elaborate example using `fancyindex_header`_ and
-`fancyindex_footer`_ you can check `nice theme
-<https://github.com/TheInsomniac/Nginx-Fancyindex-Theme>`__
-designed by `@TheInsomniac <https://github.com/TheInsomniac>`__.
+The following themes demonstrate the level of customization which can be
+achieved using the module:
+
+* `Theme <https://github.com/TheInsomniac/Nginx-Fancyindex-Theme>`__ by
+  `@TheInsomniac <https://github.com/TheInsomniac>`__. Uses custom header and
+  footer.
+* `Theme <https://github.com/zzqw/Nginx-Fancyindex-Theme>`__ by
+  `@zzqw <https://github.com/zzqw>`__. Uses custom header and footer, the
+  header includes search field to filter by filename using JavaScript
+  (`demo <http://zzqw.grr.io/fancyindex/>`__).
 
 
 Directives
