@@ -33,6 +33,113 @@
 #endif /* __GNUC__ */
 
 
+static const char *short_weekday[] = {
+    "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
+};
+static const char *long_weekday[] = {
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sunday",
+};
+static const char *short_month[] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+};
+static const char *long_month[] = {
+    "January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December",
+};
+
+
+#define DATETIME_FORMATS(F_, t) \
+    F_ ('a',  3, "%3s",  short_weekday[((t)->ngx_tm_wday + 6) % 7]) \
+    F_ ('A',  9, "%s",   long_weekday [((t)->ngx_tm_wday + 6) % 7]) \
+    F_ ('b',  3, "%3s",  short_month[(t)->ngx_tm_mon - 1]         ) \
+    F_ ('B',  9, "%s",   long_month [(t)->ngx_tm_mon - 1]         ) \
+    F_ ('d',  2, "%02d", (t)->ngx_tm_mday                         ) \
+    F_ ('e',  2, "%2d",  (t)->ngx_tm_mday                         ) \
+    F_ ('F', 10, "%d-%02d-%02d",                                    \
+                  (t)->ngx_tm_year,                                 \
+                  (t)->ngx_tm_mon,                                  \
+                  (t)->ngx_tm_mday                                ) \
+    F_ ('H',  2, "%02d", (t)->ngx_tm_hour                         ) \
+    F_ ('I',  2, "%02d", ((t)->ngx_tm_hour % 12) + 1              ) \
+    F_ ('k',  2, "%2d",  (t)->ngx_tm_hour                         ) \
+    F_ ('l',  2, "%2d",  ((t)->ngx_tm_hour % 12) + 1              ) \
+    F_ ('m',  2, "%02d", (t)->ngx_tm_mon                          ) \
+    F_ ('M',  2, "%02d", (t)->ngx_tm_min                          ) \
+    F_ ('p',  2, "%2s",  (((t)->ngx_tm_hour < 12) ? "AM" : "PM")  ) \
+    F_ ('P',  2, "%2s",  (((t)->ngx_tm_hour < 12) ? "am" : "pm")  ) \
+    F_ ('r', 11, "%02d:%02d:%02d %2s",                              \
+                 ((t)->ngx_tm_hour % 12) + 1,                       \
+                 (t)->ngx_tm_min,                                   \
+                 (t)->ngx_tm_sec,                                   \
+                 (((t)->ngx_tm_hour < 12) ? "AM" : "PM")          ) \
+    F_ ('R',  5, "%02d:%02d", (t)->ngx_tm_hour, (t)->ngx_tm_min   ) \
+    F_ ('S',  2, "%02d", (t)->ngx_tm_sec                          ) \
+    F_ ('T',  8, "%02d:%02d:%02d",                                  \
+                 (t)->ngx_tm_hour,                                  \
+                 (t)->ngx_tm_min,                                   \
+                 (t)->ngx_tm_sec                                  ) \
+    F_ ('u',  1, "%1d", (((t)->ngx_tm_wday + 6) % 7) + 1          ) \
+    F_ ('w',  1, "%1d", ((t)->ngx_tm_wday + 6) % 7                ) \
+    F_ ('y',  2, "%02d", (t)->ngx_tm_year % 100                   ) \
+    F_ ('Y',  4, "%04d", (t)->ngx_tm_year                         )
+
+
+static size_t
+ngx_fancyindex_timefmt_calc_size (const ngx_str_t *fmt)
+{
+#define DATETIME_CASE(letter, fmtlen, fmt, ...) \
+        case letter: result += (fmtlen); break;
+
+    size_t i, result = 0;
+    for (i = 0; i < fmt->len; i++) {
+        if (fmt->data[i] == '%') {
+            if (++i >= fmt->len) {
+                result++;
+                break;
+            }
+            switch (fmt->data[i]) {
+                DATETIME_FORMATS(DATETIME_CASE,)
+                default:
+                    result++;
+            }
+        } else {
+            result++;
+        }
+    }
+    return result;
+
+#undef DATETIME_CASE
+}
+
+
+static u_char*
+ngx_fancyindex_timefmt (u_char *buffer, const ngx_str_t *fmt, const ngx_tm_t *tm)
+{
+#define DATETIME_CASE(letter, fmtlen, fmt, ...) \
+        case letter: buffer = ngx_snprintf(buffer, fmtlen, fmt, ##__VA_ARGS__); break;
+
+    size_t i;
+    for (i = 0; i < fmt->len; i++) {
+        if (fmt->data[i] == '%') {
+            if (++i >= fmt->len) {
+                *buffer++ = '%';
+                break;
+            }
+            switch (fmt->data[i]) {
+                DATETIME_FORMATS(DATETIME_CASE, tm)
+                default:
+                    *buffer++ = fmt->data[i];
+            }
+        } else {
+            *buffer++ = fmt->data[i];
+        }
+    }
+    return buffer;
+
+#undef DATETIME_CASE
+}
+
 
 /**
  * Configuration structure for the fancyindex module. The configuration
@@ -49,6 +156,7 @@ typedef struct {
     ngx_str_t  header;       /**< File name for header, or empty if none. */
     ngx_str_t  footer;       /**< File name for footer, or empty if none. */
     ngx_str_t  css_href;     /**< Link to a CSS stylesheet, or empty if none. */
+    ngx_str_t  time_format;  /**< Format used for file timestamps. */
 
     ngx_array_t *ignore;     /**< List of files to ignore in listings. */
 } ngx_http_fancyindex_loc_conf_t;
@@ -229,6 +337,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       ngx_conf_set_flag_slot,
       offsetof(ngx_http_fancyindex_loc_conf_t, hide_symlinks),
       0,
+      NULL },
+
+    { ngx_string("fancyindex_time_format"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_str_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, time_format),
       NULL },
 
     ngx_null_command
@@ -429,11 +544,6 @@ make_content_buf(
     ngx_dir_t    dir;
     ngx_buf_t   *b;
 
-    static char *months[] = {
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    };
-
     /*
      * NGX_DIR_MASK_LEN is lesser than NGX_HTTP_FANCYINDEX_PREALLOCATE
      */
@@ -604,6 +714,7 @@ make_content_buf(
         + ngx_sizeof_ssz(t06_list1)
         + ngx_sizeof_ssz(t_parentdir_entry)
         + ngx_sizeof_ssz(t07_list2)
+        + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
         ;
 
     /*
@@ -632,9 +743,8 @@ make_content_buf(
             + alcf->name_length + ngx_sizeof_ssz("&gt;")
             + ngx_sizeof_ssz("</a></td><td>")
             + 20 /* File size */
-            + ngx_sizeof_ssz("</td><td>")
-            + ngx_sizeof_ssz(" 28-Sep-1970 12:00 ")
-            + ngx_sizeof_ssz("</td></tr>\n")
+            + ngx_sizeof_ssz("</td><td>")    /* Date prefix */
+            + ngx_sizeof_ssz("</td></tr>\n") /* Date suffix */
             + 2 /* CR LF */
             ;
     }
@@ -862,14 +972,9 @@ make_content_buf(
         }
 
         ngx_gmtime(entry[i].mtime + tp->gmtoff * 60 * alcf->localtime, &tm);
-
-        b->last = ngx_sprintf(b->last, "</td><td>%02d-%s-%d %02d:%02d</td></tr>",
-                              tm.ngx_tm_mday,
-                              months[tm.ngx_tm_mon - 1],
-                              tm.ngx_tm_year,
-                              tm.ngx_tm_hour,
-                              tm.ngx_tm_min);
-
+        b->last = ngx_cpymem_ssz(b->last, "</td><td>");
+        b->last = ngx_fancyindex_timefmt(b->last, &alcf->time_format, &tm);
+        b->last = ngx_cpymem_ssz(b->last, "</td></tr>");
 
         *b->last++ = CR;
         *b->last++ = LF;
@@ -1191,10 +1296,14 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
 
     /*
      * Set by ngx_pcalloc:
-     *    conf->header.len   = 0
-     *    conf->header.data  = NULL
-     *    conf->footer.len   = 0
-     *    conf->footer.data  = NULL
+     *    conf->header.len       = 0
+     *    conf->header.data      = NULL
+     *    conf->footer.len       = 0
+     *    conf->footer.data      = NULL
+     *    conf->css_href.len     = 0
+     *    conf->css_href.data    = NULL
+     *    conf->time_format.len  = 0
+     *    conf->time_format.data = NULL
      */
     conf->enable        = NGX_CONF_UNSET;
     conf->default_sort  = NGX_CONF_UNSET_UINT;
@@ -1222,6 +1331,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_str_value(conf->header, prev->header, "");
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");
+    ngx_conf_merge_str_value(conf->time_format, prev->time_format, "%Y-%b-%d %H:%S");
 
     ngx_conf_merge_ptr_value(conf->ignore, prev->ignore, NULL);
     ngx_conf_merge_value(conf->hide_symlinks, prev->hide_symlinks, 0);
