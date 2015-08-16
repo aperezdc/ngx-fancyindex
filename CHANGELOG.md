@@ -1,7 +1,7 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [Unreleased]
 ### Added
 - New feature: Allow filtering out symbolic links using the
   `fancyindex_hide_symlinks` configuration directive. (Idea and prototype
@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
   nested locations.
 
 
+## [0.3.5] - 2015-02-19
 ### Added
 - New feature: Allow setting the default sort criterion using the
   `fancyindex_default_sort` configuration directive. (Patch by
@@ -33,7 +34,7 @@ All notable changes to this project will be documented in this file.
   and `fancyindex_header` directives.
 
 
-## 0.3.4 - 2014-09-03
+## [0.3.4] - 2014-09-03
 
 ### Added
 - Viewport is now defined in the generated HTML, which works better
@@ -44,7 +45,7 @@ All notable changes to this project will be documented in this file.
   makes the HTML served to clients smaller.
 
 
-## 0.3.3 - 2013-10-25
+## [0.3.3] - 2013-10-25
 
 ### Added
 - New feature: table headers in the default template are now clickable
@@ -52,14 +53,22 @@ All notable changes to this project will be documented in this file.
   (https://github.com/aperezdc/ngx-fancyindex/issues/7)
 
 
-## 0.3.2 - 2013-06-05
+## [0.3.2] - 2013-06-05
 
 ### Fixed
 - Solved a bug that would leave certain clients stalled forever.
 - Improved handling of subrequests for non-builtin headers/footers.
 
 
-## 0.3.1 - 2011-04-04
+## [0.3.1] - 2011-04-04
 
 ### Added
 - `NEWS.rst` file, to act as change log.
+
+
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.4...v0.3.5
+[0.3.4]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3...v0.3.1
