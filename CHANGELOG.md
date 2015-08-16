@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+### Added
+- New feature: Allow filtering out symbolic links using the
+  `fancyindex_hide_symlinks` configuration directive. (Idea and prototype
+  patch by Thomas Wemm.)
 ### Changed
 - Listings in top-level directories will not generate a "Parent Directory"
   link as first element of the listing. (Patch by Thomas P.)

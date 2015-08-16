@@ -180,6 +180,14 @@ fancyindex_ignore
   listings. If Nginx was built with PCRE support strings are interpreted as
   regular expressions.
 
+fancyindex_hide_symlinks
+~~~~~~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_hide_symlinks* [*on* | *off*]
+:Default: fancyindex_hide_symlinks off
+:Context: http, server, location
+:Description:
+  When enabled, generated listings will not contain symbolic links.
+
 fancyindex_localtime
 ~~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_localtime* [*on* | *off*]

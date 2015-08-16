@@ -44,6 +44,7 @@ typedef struct {
     ngx_flag_t localtime;    /**< File mtime dates are sent in local time. */
     ngx_flag_t exact_size;   /**< Sizes are sent always in bytes. */
     ngx_uint_t name_length;  /**< Maximum length of file names in bytes. */
+    ngx_flag_t hide_symlinks;/**< Hide symbolic links in listings. */
 
     ngx_str_t  header;       /**< File name for header, or empty if none. */
     ngx_str_t  footer;       /**< File name for footer, or empty if none. */
@@ -219,6 +220,14 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
     { ngx_string("fancyindex_ignore"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_1MORE,
       ngx_http_fancyindex_ignore,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      0,
+      NULL },
+
+    { ngx_string("fancyindex_hide_symlinks"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      offsetof(ngx_http_fancyindex_loc_conf_t, hide_symlinks),
       NGX_HTTP_LOC_CONF_OFFSET,
       0,
       NULL },
@@ -495,6 +504,9 @@ make_content_buf(
         len = ngx_de_namelen(&dir);
 
         if (ngx_de_name(&dir)[0] == '.')
+            continue;
+
+        if (alcf->hide_symlinks && ngx_de_is_link (&dir))
             continue;
 
 #if NGX_PCRE
@@ -1185,12 +1197,13 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
      *    conf->footer.len   = 0
      *    conf->footer.data  = NULL
      */
-    conf->enable       = NGX_CONF_UNSET;
-    conf->default_sort = NGX_CONF_UNSET_UINT;
-    conf->localtime    = NGX_CONF_UNSET;
-    conf->name_length  = NGX_CONF_UNSET_UINT;
-    conf->exact_size   = NGX_CONF_UNSET;
-    conf->ignore       = NGX_CONF_UNSET_PTR;
+    conf->enable        = NGX_CONF_UNSET;
+    conf->default_sort  = NGX_CONF_UNSET_UINT;
+    conf->localtime     = NGX_CONF_UNSET;
+    conf->name_length   = NGX_CONF_UNSET_UINT;
+    conf->exact_size    = NGX_CONF_UNSET;
+    conf->ignore        = NGX_CONF_UNSET_PTR;
+    conf->hide_symlinks = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -1212,6 +1225,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");
 
     ngx_conf_merge_ptr_value(conf->ignore, prev->ignore, NULL);
+    ngx_conf_merge_value(conf->hide_symlinks, prev->hide_symlinks, 0);
 
     return NGX_CONF_OK;
 }
