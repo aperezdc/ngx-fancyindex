@@ -1324,6 +1324,8 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_fancyindex_loc_conf_t *prev = parent;
     ngx_http_fancyindex_loc_conf_t *conf = child;
 
+    (void) cf; /* unused */
+
     ngx_conf_merge_value(conf->enable, prev->enable, 0);
     ngx_conf_merge_uint_value(conf->default_sort, prev->default_sort, NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME);
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
@@ -1346,6 +1348,8 @@ ngx_http_fancyindex_ignore(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 {
     ngx_http_fancyindex_loc_conf_t *alcf = conf;
     ngx_str_t *value;
+
+    (void) cmd; /* unused */
 
 #if (NGX_PCRE)
     ngx_uint_t          i;
