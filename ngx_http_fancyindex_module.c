@@ -1334,7 +1334,8 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_str_value(conf->header, prev->header, "");
     ngx_conf_merge_str_value(conf->footer, prev->footer, "");
-    ngx_conf_merge_str_value(conf->time_format, prev->time_format, "%Y-%b-%d %H:%S");
+    ngx_conf_merge_str_value(conf->css_href, prev->css_href, "");
+    ngx_conf_merge_str_value(conf->time_format, prev->time_format, "%Y-%b-%d %H:%M");
 
     ngx_conf_merge_ptr_value(conf->ignore, prev->ignore, NULL);
     ngx_conf_merge_value(conf->hide_symlinks, prev->hide_symlinks, 0);
