@@ -620,7 +620,9 @@ make_content_buf(
 
 #if NGX_PCRE
         {
-            ngx_str_t str = { len, ngx_de_name(&dir) };
+            ngx_str_t str;
+            str.len = len;
+            str.data = ngx_de_name(&dir);
 
             if (alcf->ignore && ngx_regex_exec_array(alcf->ignore, &str,
                                                      r->connection->log)
@@ -1025,7 +1027,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-    if ((rc = make_content_buf(r, &out[0].buf, alcf) != NGX_OK))
+    if ((rc = make_content_buf(r, &out[0].buf, alcf)) != NGX_OK)
         return rc;
 
     out[0].buf->last_in_chain = 1;
@@ -1197,7 +1199,7 @@ ngx_http_fancyindex_cmp_entries_size_desc(const void *one, const void *two)
         return 1;
     }
 
-    return second->size - first->size;
+    return (int) (second->size - first->size);
 }
 
 
@@ -1215,7 +1217,7 @@ ngx_http_fancyindex_cmp_entries_mtime_desc(const void *one, const void *two)
         return 1;
     }
 
-    return second->mtime - first->mtime;
+    return (int) (second->mtime - first->mtime);
 }
 
 
@@ -1251,7 +1253,7 @@ ngx_http_fancyindex_cmp_entries_size_asc(const void *one, const void *two)
         return 1;
     }
 
-    return first->size - second->size;
+    return (int) (first->size - second->size);
 }
 
 
@@ -1269,7 +1271,7 @@ ngx_http_fancyindex_cmp_entries_mtime_asc(const void *one, const void *two)
         return 1;
     }
 
-    return first->mtime - second->mtime;
+    return (int) (first->mtime - second->mtime);
 }
 
 
