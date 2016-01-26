@@ -1,6 +1,6 @@
 /*
  * ngx_http_fancyindex_module.c
- * Copyright © 2007-2013 Adrian Perez <aperez@igalia.com>
+ * Copyright © 2007-2016 Adrian Perez <aperez@igalia.com>
  *
  * Module used for fancy indexing of directories. Features and differences
  * with the stock nginx autoindex module:
