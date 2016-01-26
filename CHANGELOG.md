@@ -2,13 +2,15 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.3.6] - 2016-01-26
 ### Added
 - New feature: Allow filtering out symbolic links using the
   `fancyindex_hide_symlinks` configuration directive. (Idea and prototype
   patch by Thomas Wemm.)
 - New feature: Allow specifying the format of timestamps using the
-  `fancyindex_time_format` configuration directive. (Idea suggested by
-  Xiao Meng <novoreorx@gmail.com>).
+  `fancyindex_time_format` configuration directive. (Idea suggested by Xiao
+  Meng <<novoreorx@gmail.com>>).
 
 ### Changed
 - Listings in top-level directories will not generate a "Parent Directory"
@@ -17,6 +19,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Fix propagation and overriding of the `fancyindex_css_href` setting inside
   nested locations.
+- Minor changes in the code to allow building cleanly under Windows with
+  Visual Studio 2013. (Patch by Y. Yuan <<yzwduck@gmail.com>>).
 
 
 ## [0.3.5] - 2015-02-19
@@ -68,7 +72,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.2...v0.3.3
