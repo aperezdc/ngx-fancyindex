@@ -1038,8 +1038,7 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     r->headers_out.content_type.data = (u_char *) "text/html";
 
     rc = ngx_http_send_header(r);
-
-    if (rc != NGX_OK || r->header_only)
+    if (rc == NGX_ERROR || rc > NGX_OK || r->header_only)
         return rc;
 
     if (alcf->header.len > 0) {
