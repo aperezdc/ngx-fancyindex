@@ -1,0 +1,29 @@
+language: c
+
+compiler:
+  - clang
+  - gcc
+
+env:
+  # At least try stable and mainline versions
+  - NGINX=1.9.11
+  - NGINX=1.8.1
+  # Also, the oldest supported version
+  # TODO: Fails building because it won't find IOV_MAX from header.
+  #- NGINX=0.7.69
+
+sudo: false
+
+addons:
+  apt:
+    packages:
+      - libpcre3-dev
+      - libssl-dev
+
+cache: ccache
+
+script: |
+  wget -O - http://nginx.org/download/nginx-${NGINX}.tar.gz | tar -xzf -
+  cd nginx-${NGINX}
+  ./configure --add-module=.. --with-http_addition_module
+  make
