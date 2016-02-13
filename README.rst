@@ -176,6 +176,19 @@ fancyindex_header
 .. note:: Using this directive needs the ngx_http_addition_module_ built
    into Nginx.
 
+fancyindex_show_path
+~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_show_path* [*on* | *off*]
+:Default: fancyindex_show_path on
+:Context: http, server, location
+:Description:
+  Whether to output or not the path and the closing </h1> tag after the header.
+  This is useful when you want to handle the path displaying with a PHP script
+  for example.
+
+.. warning:: This directive can be turned off only if a custom header is provided
+   using fancyindex_header.
+
 fancyindex_ignore
 ~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_ignore string1 [string2 [... stringN]]*
