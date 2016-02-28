@@ -117,6 +117,15 @@ fancyindex_default_sort
 :Description:
   Defines sorting criterion by default.
 
+fancyindex_directories_first
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_directories_first* [*on* | *off*]
+:Default: fancyindex_directories_first on
+:Context: http, server, location
+:Description:
+  If enabled (default setting), groups directories together and sorts them
+  before all regular files. If disabled, directories are sorted together with files.
+
 fancyindex_css_href
 ~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_css_href uri*
