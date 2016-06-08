@@ -56,6 +56,10 @@ Building
     $ ./configure --add-module=../nginx-fancyindex-?.?.? \
        [--with-http_addition_module] [extra desired options]
 
+   Since version 0.4.0, the module can also be built as a
+   `dynamic module <https://www.nginx.com/resources/wiki/extending/converting/>`_,
+   using ``--add-dynamic-module=…`` instead.
+
 4. Build and install the software::
 
     $ make
