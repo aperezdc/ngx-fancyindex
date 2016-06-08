@@ -6,8 +6,9 @@ compiler:
 
 env:
   # At least try stable and mainline versions
-  - NGINX=1.9.11
-  - NGINX=1.8.1
+  - NGINX=1.10.0 TYPE=dynamic
+  - NGINX=1.9.15 TYPE=dynamic
+  - NGINX=1.8.1 TYPE=static
   # Also, the oldest supported version
   # TODO: Fails building because it won't find IOV_MAX from header.
   #- NGINX=0.7.69
@@ -25,5 +26,5 @@ cache: ccache
 script: |
   wget -O - http://nginx.org/download/nginx-${NGINX}.tar.gz | tar -xzf -
   cd nginx-${NGINX}
-  ./configure --add-module=.. --with-http_addition_module
+  if [[ ${TYPE} = "dynamic" ]] ; then ./configure --add-dynamic-module=.. --with-http_addition_module ; else ./configure --add-module=.. --with-http_addition_module ; fi
   make
