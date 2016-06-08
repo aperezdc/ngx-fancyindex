@@ -2,7 +2,17 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.4.0] - 2016-06-08
 ### Added
+- The module can now be built as a [dynamic
+  module](https://www.nginx.com/resources/wiki/extending/converting/).
+  (Patch by Róbert Nagy <<vrnagy@gmail.com>>.)
+- New configuration directive `fancyindex_show_path`, which allows hiding the
+  `<h1>` header which contains the current path.
+  (Patch by Thomas P.  <<tpxp@live.fr>>.)
+
+### Changed
 - Directory and file links in listings now have a title="..." attribute.
   (Patch by `@janglapuk` <<trusdi.agus@gmail.com>>.)
 
@@ -80,7 +90,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.6...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.6...v0.4.0
 [0.3.6]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.3...v0.3.4
