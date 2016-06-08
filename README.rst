@@ -2,8 +2,8 @@
 Nginx Fancy Index module
 ========================
 
-.. image:: https://drone.io/github.com/aperezdc/ngx-fancyindex/status.png
-   :target: https://drone.io/github.com/aperezdc/ngx-fancyindex/latest
+.. image:: https://travis-ci.org/aperezdc/ngx-fancyindex.svg?branch=master
+   :target: https://travis-ci.org/aperezdc/ngx-fancyindex
    :alt: Build Status
 
 .. contents::
