@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Fix for hung requests when the module is used along with `ngx_pagespeed`.
-  (Patch by Otto van der Schaaf <>oschaaf@we-amp.com>>.)
+  (Patch by Otto van der Schaaf <<oschaaf@we-amp.com>>.)
 
 
 ## [0.3.6] - 2016-01-26
