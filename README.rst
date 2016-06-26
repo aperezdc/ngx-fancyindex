@@ -92,10 +92,10 @@ achieved using the module:
 * `Theme <https://github.com/TheInsomniac/Nginx-Fancyindex-Theme>`__ by
   `@TheInsomniac <https://github.com/TheInsomniac>`__. Uses custom header and
   footer.
-* `Theme <https://github.com/stayn0ided/Nginx-Fancyindex-Theme>`__ by
-  `@stayn0ided <https://github.com/stayn0ided>`__. Uses custom header and footer, the
+* `Theme <https://github.com/nwrd/Nginx-Fancyindex-Theme>`__ by
+  nwrd <https://github.com/nwrd>`__. Uses custom header and footer, the
   header includes search field to filter by filename using JavaScript
-  (`demo <http://noided.grr.io/fancyindex/>`__).
+  (`demo <http://nwrd.sly.io/>`__).
 
 
 Directives
