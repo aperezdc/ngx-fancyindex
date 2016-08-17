@@ -17,18 +17,6 @@ if [[ $# -gt 1 && $2 -eq 1 ]] ; then
 fi
 readonly dynamic
 
-readonly preamble='
-function fail () {
-	printf "(FF) "
-	printf "$@"
-	exit 1
-} 1>&2
-function warn () {
-	printf "(WW)"
-	printf "$@"
-} 1>&2
-'
-
 declare -a t_pass=( )
 declare -a t_fail=( )
 
@@ -40,9 +28,9 @@ for t in "$T"/*.test ; do
 	outfile="${name}.out"
 	shfile="${name}.sh"
 	cat > "${shfile}" <<-EOF
-	${preamble}
 	readonly PREFIX='${prefix}'
 	readonly DYNAMIC=${dynamic}
+	$(< "$T/preamble")
 	$(< "$t")
 	EOF
 	if bash -e "${shfile}" > "${outfile}" 2> "${errfile}" ; then
