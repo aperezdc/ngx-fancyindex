@@ -1,0 +1,3 @@
+#! /bin/bash
+nginx_start
+grep 'Index of' <( fetch )

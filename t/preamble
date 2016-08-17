@@ -6,6 +6,72 @@
 # Distributed under terms of the MIT license.
 #
 
+function nginx_conf_generate () {
+	if ${DYNAMIC} ; then
+		echo 'load_module modules/ngx_http_fancyindex_module.so;'
+	fi
+	cat <<-EOF
+	worker_processes 1;
+	events { worker_connections 1024; }
+	http {
+		include mime.types;
+		default_type application/octet-stream;
+		sendfile on;
+		keepalive_timeout 65;
+		server {
+			server_name localhost;
+			listen 127.0.0.1:8888;
+			root ${TESTDIR};
+			error_page 500 502 503 504 /50x.html;
+			location = /50x.html { root html; }
+			location / {
+				index index.html;
+				fancyindex on;
+				$*
+			}
+		}
+	}
+	EOF
+}
+
+readonly NGINX_CONF="${PREFIX}/conf/nginx.conf"
+readonly NGINX_PID="${PREFIX}/logs/nginx.pid"
+rm -f "${NGINX_CONF}" "${NGINX_PID}"
+mkdir -p "${PREFIX}/logs"
+
+function nginx () {
+	"${PREFIX}/sbin/nginx" "$@"
+}
+
+function nginx_conf () {
+	nginx_conf_generate "$@" > "${NGINX_CONF}"
+}
+
+function nginx_is_running () {
+	[[ -r ${NGINX_PID} ]] && kill -0 $(< "${NGINX_PID}")
+}
+
+function nginx_stop () {
+	if nginx_is_running ; then nginx -s stop ; fi
+	rm -f "${NGINX_PID}"
+}
+trap nginx_stop EXIT
+
+function nginx_start () {
+	if [[ $# -gt 0 || ! -r ${NGINX_CONF} ]] ; then nginx_conf "$@" ; fi
+	nginx_stop  # Ensure that it is not running.
+	nginx
+}
+
+function fetch () {
+	local -a opts=( -q )
+	if [[ $1 = --with-headers ]] ; then
+		opts+=( -S )
+		shift
+	fi
+	wget "${opts[@]}" -O- "http://localhost:8888${1:-/}" 2>&1
+}
+
 function fail () {
 	printf "(FF) "
 	printf "$@"

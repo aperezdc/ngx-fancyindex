@@ -6,10 +6,16 @@ if [[ $# -lt 1 || $# -gt 2 ]] ; then
 	exit 1
 fi
 
-readonly T=$(dirname "$0")
+# Obtain the absolute path to the tests directory
+pushd "$(dirname "$0")" &> /dev/null
+readonly T=$(pwd)
+popd &> /dev/null
 export T
 
-readonly prefix=$1
+# Same for the nginx prefix directory
+pushd "$1" &> /dev/null
+readonly prefix=$(pwd)
+popd &> /dev/null
 
 dynamic=false
 if [[ $# -gt 1 && $2 -eq 1 ]] ; then
@@ -28,8 +34,9 @@ for t in "$T"/*.test ; do
 	outfile="${name}.out"
 	shfile="${name}.sh"
 	cat > "${shfile}" <<-EOF
-	readonly PREFIX='${prefix}'
 	readonly DYNAMIC=${dynamic}
+	readonly TESTDIR='$T'
+	readonly PREFIX='${prefix}'
 	$(< "$T/preamble")
 	$(< "$t")
 	EOF
