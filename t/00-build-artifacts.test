@@ -1,0 +1,11 @@
+#! /bin/bash
+readonly nginx_path="${PREFIX}/sbin/nginx"
+readonly so_path="${PREFIX}/modules/ngx_http_fancyindex_module.so"
+
+[[ -x ${nginx_path} ]] \
+	|| fail "executable binary not found at '%s'\n" "${nginx_path}"
+
+if ${DYNAMIC} ; then
+	[[ -r ${so_path} ]] \
+		|| fail "module not found at '%s'\n" "${so_path}"
+fi

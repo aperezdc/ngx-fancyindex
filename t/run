@@ -1,0 +1,69 @@
+#! /bin/bash
+set -e
+
+if [[ $# -lt 1 || $# -gt 2 ]] ; then
+	echo "Usage: $0 <prefix-path> [1]" 1>&2
+	exit 1
+fi
+
+readonly T=$(dirname "$0")
+export T
+
+readonly prefix=$1
+
+dynamic=false
+if [[ $# -gt 1 && $2 -eq 1 ]] ; then
+	dynamic=true
+fi
+readonly dynamic
+
+readonly preamble='
+function fail () {
+	printf "(FF) "
+	printf "$@"
+	exit 1
+} 1>&2
+function warn () {
+	printf "(WW)"
+	printf "$@"
+} 1>&2
+'
+
+declare -a t_pass=( )
+declare -a t_fail=( )
+
+for t in "$T"/*.test ; do
+	name="t/${t##*/}"
+	name=${name%.test}
+	printf "${name} ... "
+	errfile="${name}.err"
+	outfile="${name}.out"
+	shfile="${name}.sh"
+	cat > "${shfile}" <<-EOF
+	${preamble}
+	readonly PREFIX='${prefix}'
+	readonly DYNAMIC=${dynamic}
+	$(< "$t")
+	EOF
+	if bash -e "${shfile}" > "${outfile}" 2> "${errfile}" ; then
+		t_pass+=( "${name}" )
+		printf '[1;32mpassed[0;0m\n'
+	else
+		t_fail+=( "${name}" )
+		printf '[1;31mfailed[0;0m\n'
+	fi
+done
+
+for name in "${t_fail[@]}" ; do
+	printf '=== %s.out ===\n' "${name}"
+	cat "${name}.out"
+	printf '=== %s.err ===\n' "${name}"
+	cat "${name}.err"
+done
+
+printf '=== passed/failed/total: [1;32m%d[0;0m/[1;31m%d[0;0m/[1m%d[0m ===\n' \
+	${#t_pass[@]} ${#t_fail[@]} $(( ${#t_pass[@]} + ${#t_fail[@]} ))
+
+if [[ ${#t_fail[@]} -gt 0 ]] ; then
+	exit 1
+fi
