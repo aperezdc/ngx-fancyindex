@@ -2,10 +2,16 @@
 readonly nginx_path="${PREFIX}/sbin/nginx"
 readonly so_path="${PREFIX}/modules/ngx_http_fancyindex_module.so"
 
-[[ -x ${nginx_path} ]] \
-	|| fail "executable binary not found at '%s'\n" "${nginx_path}"
+if [[ ! -x ${nginx_path} ]] ; then
+	fail "executable binary not found at '%s'\n" "${nginx_path}"
+fi
 
 if ${DYNAMIC} ; then
-	[[ -r ${so_path} ]] \
-		|| fail "module not found at '%s'\n" "${so_path}"
+	if [[ ! -r ${so_path} ]] ; then
+		fail "module not found at '%s'\n" "${so_path}"
+	fi
+else
+	if [[ -r ${so_path} ]] ; then
+		fail "module should not exist at '%s'\n" "${so_path}"
+	fi
 fi
