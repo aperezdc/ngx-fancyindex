@@ -9,6 +9,9 @@ env:
   - NGINX=1.10.0 TYPE=dynamic
   - NGINX=1.9.15 TYPE=dynamic
   - NGINX=1.8.1 TYPE=static
+  - NGINX=1.11.3
+  - NGINX=1.9.11
+  - NGINX=1.8.1
   # Also, the oldest supported version
   # TODO: Fails building because it won't find IOV_MAX from header.
   #- NGINX=0.7.69
