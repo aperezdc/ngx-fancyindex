@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Added
+- New `fancyindex_directories_first` configuration directive (enabled by
+  default), which allows setting whether directories are sorted before other
+  files. (Patch by Luke Zapart <<luke@zapart.org>>.)
 
 ## [0.4.0] - 2016-06-08
 ### Added
