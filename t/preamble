@@ -40,7 +40,7 @@ rm -f "${NGINX_CONF}" "${NGINX_PID}"
 mkdir -p "${PREFIX}/logs"
 
 function nginx () {
-	"${PREFIX}/sbin/nginx" "$@"
+	env - PATH="${PATH}" "${PREFIX}/sbin/nginx" "$@"
 }
 
 function nginx_conf () {
