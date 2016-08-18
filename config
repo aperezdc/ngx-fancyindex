@@ -5,6 +5,7 @@ if test -n "$ngx_module_link"; then
     ngx_module_type=HTTP
     ngx_module_name=ngx_http_fancyindex_module
     ngx_module_srcs="$ngx_addon_dir/ngx_http_fancyindex_module.c"
+    ngx_module_deps="$ngx_addon_dir/template.h"
 
     . auto/module
 else
