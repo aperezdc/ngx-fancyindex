@@ -1,3 +1,7 @@
 #! /bin/bash
+cat <<---
+This test fetches the root directory served by Nginx, which has no index file,
+and checks that the output contains something that resembles a directory index.
+--
 nginx_start
 grep 'Index of' <( fetch )

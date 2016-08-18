@@ -1,4 +1,9 @@
 #! /bin/bash
+cat <<---
+This test checks that the built Nginx either has the dynamic fancyindex
+module available, or that it's not there (for static builds).
+--
+
 readonly nginx_path="${PREFIX}/sbin/nginx"
 readonly so_path="${PREFIX}/modules/ngx_http_fancyindex_module.so"
 
