@@ -50,13 +50,16 @@ for t in "$T"/*.test ; do
 done
 
 for name in "${t_fail[@]}" ; do
-	printf '=== %s.out ===\n' "${name}"
+	echo
+	printf '[1m===[0m %s.out\n' "${name}"
 	cat "${name}.out"
-	printf '=== %s.err ===\n' "${name}"
+	echo
+	printf '[1m===[0m %s.err\n' "${name}"
 	cat "${name}.err"
+	echo
 done
 
-printf '=== passed/failed/total: [1;32m%d[0;0m/[1;31m%d[0;0m/[1m%d[0m ===\n' \
+printf '[1m===[0m passed/failed/total: [1;32m%d[0;0m/[1;31m%d[0;0m/[1m%d[0m\n' \
 	${#t_pass[@]} ${#t_fail[@]} $(( ${#t_pass[@]} + ${#t_fail[@]} ))
 
 if [[ ${#t_fail[@]} -gt 0 ]] ; then
