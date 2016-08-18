@@ -30,7 +30,5 @@ addons:
 cache: ccache
 
 script:
-  - wget -O - http://nginx.org/download/nginx-${NGINX}.tar.gz | tar -xzf -
-  - rm -rf prefix/
-  - ( cd nginx-${NGINX} && ./configure --add-${DYNAMIC:+dynamic-}module=.. --with-http_addition_module --prefix="$(pwd)/../prefix" && make install )
-  - ./t/run "$(pwd)/prefix" ${DYNAMIC}
+  - echo "NGINX=${NGINX} ${DYNAMIC:+DYNAMIC=${DYNAMIC}}"
+  - t/build-and-run ${NGINX} ${DYNAMIC}
