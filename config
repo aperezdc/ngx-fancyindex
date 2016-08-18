@@ -1,12 +1,12 @@
 # vim:ft=sh:
 ngx_addon_name=ngx_http_fancyindex_module
 
-if test -n "$ngx_module_link"; then
+if [ "$ngx_module_link" = DYNAMIC ] ; then
     ngx_module_type=HTTP
     ngx_module_name=ngx_http_fancyindex_module
     ngx_module_srcs="$ngx_addon_dir/ngx_http_fancyindex_module.c"
     ngx_module_deps="$ngx_addon_dir/template.h"
-
+    ngx_module_order="$ngx_module_name ngx_http_autoindex_module"
     . auto/module
 else
     # XXX: Insert fancyindex module *after* index module!

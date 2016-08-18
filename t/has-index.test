@@ -1,0 +1,7 @@
+#! /bin/bash
+cat <<---
+This test ensures that the "index.html" is returned instead of a directory
+listing when fetching a directory which contains an index file.
+--
+nginx_start
+diff -u "${TESTDIR}/has-index/index.html" <( fetch /has-index/ ) 1>&2
