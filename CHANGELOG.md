@@ -2,10 +2,16 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.4.1] - 2016-08-18
 ### Added
 - New `fancyindex_directories_first` configuration directive (enabled by
   default), which allows setting whether directories are sorted before other
   files. (Patch by Luke Zapart <<luke@zapart.org>>.)
+
+### Fixed
+- Fix index files not working when the fancyindex module is in use (#46).
+
 
 ## [0.4.0] - 2016-06-08
 ### Added
@@ -94,7 +100,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.6...v0.4.0
 [0.3.6]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.4...v0.3.5
