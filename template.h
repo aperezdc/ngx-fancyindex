@@ -54,7 +54,7 @@ static const u_char t05_body2[] = ""
 "\n"
 ;
 static const u_char t06_list1[] = ""
-"<table id=\"list\" cellpadding=\"0.1em\" cellspacing=\"0\">"
+"<table id=\"list\">"
 "<thead>"
 "<tr>"
 "<th style=\"width:55%\"><a href=\"?C=N&O=A\">File Name</a>&nbsp;<a href=\"?C=N&O=D\">&nbsp;&#8595;&nbsp;</a></th>"
