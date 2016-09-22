@@ -190,6 +190,10 @@ static ngx_conf_enum_t ngx_http_fancyindex_sort_criteria[] = {
  */
 #define ngx_sizeof_ssz(_s)  (sizeof(_s) - 1)
 
+/**
+ * Compute the length of a statically allocated array
+ */
+#define DIM(x) (sizeof(x)/sizeof(*(x)))
 
 /**
  * Copy a static zero-terminated string. Useful to output template
@@ -552,15 +556,19 @@ make_content_buf(
 
     off_t        length;
     size_t       len, root, copy, allocated;
-    u_char      *filename, *last, scale;
+    int64_t      multiplier;
+    u_char      *filename, *last;
     ngx_tm_t     tm;
     ngx_array_t  entries;
     ngx_time_t  *tp;
-    ngx_uint_t   i;
-    ngx_int_t    size;
+    ngx_uint_t   i, j;
     ngx_str_t    path;
     ngx_dir_t    dir;
     ngx_buf_t   *b;
+
+    static const char    *sizes[]  = { "EiB", "PiB", "TiB", "GiB", "MiB", "KiB", "B" };
+    static const int64_t  exbibyte = 1024LL * 1024LL * 1024LL *
+                                     1024LL * 1024LL * 1024LL;
 
     /*
      * NGX_DIR_MASK_LEN is lesser than NGX_HTTP_FANCYINDEX_PREALLOCATE
@@ -982,41 +990,17 @@ make_content_buf(
                 *b->last++ = '-';
             } else {
                 length = entry[i].size;
+                multiplier = exbibyte;
 
-                if (length > 1024 * 1024 * 1024 - 1) {
-                    size = (ngx_int_t) (length / (1024 * 1024 * 1024));
-                    if ((length % (1024 * 1024 * 1024))
-                                                > (1024 * 1024 * 1024 / 2 - 1))
-                    {
-                        size++;
-                    }
-                    scale = 'G';
+                for (j = 0; j < DIM(sizes) - 1 && length < multiplier; j++)
+                    multiplier /= 1024;
 
-                } else if (length > 1024 * 1024 - 1) {
-                    size = (ngx_int_t) (length / (1024 * 1024));
-                    if ((length % (1024 * 1024)) > (1024 * 1024 / 2 - 1)) {
-                        size++;
-                    }
-                    scale = 'M';
-
-                } else if (length > 9999) {
-                    size = (ngx_int_t) (length / 1024);
-                    if (length % 1024 > 511) {
-                        size++;
-                    }
-                    scale = 'K';
-
-                } else {
-                    size = (ngx_int_t) length;
-                    scale = '\0';
-                }
-
-                if (scale) {
-                    b->last = ngx_sprintf(b->last, "%6i%c", size, scale);
-
-                } else {
-                    b->last = ngx_sprintf(b->last, " %6i", size);
-                }
+                /* If we are showing the filesize in bytes, do not show a decimal */
+                if (j == DIM(sizes) - 1)
+                    b->last = ngx_sprintf(b->last, "%d %s", length, sizes[j]);
+                else
+                    b->last = ngx_sprintf(b->last, "%.1f %s", 
+                                          (float) length / multiplier, sizes[j]);
             }
         }
 
