@@ -26,7 +26,7 @@ readonly dynamic
 declare -a t_pass=( )
 declare -a t_fail=( )
 
-for t in "$T"/*.test ; do
+for t in `ls "$T"/*.test | sort -R` ; do
 	name="t/${t##*/}"
 	name=${name%.test}
 	printf "${name} ... "
