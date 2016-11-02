@@ -6,6 +6,9 @@
 # Distributed under terms of the MIT license.
 #
 
+# Configuration defaults
+EXACT_SIZE="on"
+
 function nginx_conf_generate () {
 	if ${DYNAMIC} ; then
 		echo 'load_module modules/ngx_http_fancyindex_module.so;'
@@ -27,6 +30,7 @@ function nginx_conf_generate () {
 			location / {
 				index index.html;
 				fancyindex on;
+				fancyindex_exact_size ${EXACT_SIZE};
 				$*
 			}
 		}
