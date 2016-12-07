@@ -2,8 +2,7 @@
 cat <<---
 We test if the output from using "fancyindex_exact_size off" looks sane
 --
-EXACT_SIZE="off"
-nginx_start
+nginx_start 'fancyindex_exact_size off;'
 content=$(fetch)
 grep -e '[1-9]\.[0-9] KiB'  <<< "${content}"
 grep -E '[0-9]+ B'  <<< "${content}"
