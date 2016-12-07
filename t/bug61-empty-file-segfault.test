@@ -1,0 +1,16 @@
+#! /bin/bash
+cat <<---
+Bug #61: Listing a directory with an empty file crashes Nginx
+https://github.com/aperezdc/ngx-fancyindex/issues/61
+--
+
+# Prepare an empty directory with an empty file
+mkdir -p "${TESTDIR}/bug61"
+touch "${TESTDIR}/bug61/bug61.txt"
+
+nginx_start 'fancyindex_exact_size off;'
+content=$(fetch /bug61/)
+test -n "${content}" || fail "Empty response"
+echo "Response:"
+echo "${content}"
+nginx_is_running || fail "Nginx died"
