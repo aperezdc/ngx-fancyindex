@@ -997,7 +997,7 @@ make_content_buf(
 
                 /* If we are showing the filesize in bytes, do not show a decimal */
                 if (j == DIM(sizes) - 1)
-                    b->last = ngx_sprintf(b->last, "%d %s", length, sizes[j]);
+                    b->last = ngx_sprintf(b->last, "%O %s", length, sizes[j]);
                 else
                     b->last = ngx_sprintf(b->last, "%.1f %s", 
                                           (float) length / multiplier, sizes[j]);
