@@ -58,7 +58,8 @@ Building
 
    Since version 0.4.0, the module can also be built as a
    `dynamic module <https://www.nginx.com/resources/wiki/extending/converting/>`_,
-   using ``--add-dynamic-module=…`` instead.
+   using ``--add-dynamic-module=…`` instead and ``load_module "modules/ngx_http_fancyindex_module.so";`
+   in the configuration file
 
 4. Build and install the software::
 
