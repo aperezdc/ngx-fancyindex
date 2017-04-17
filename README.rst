@@ -26,7 +26,23 @@ server written by `Igor Sysoev <http://sysoev.ru>`__.
 Requirements
 ============
 
-You will need the sources for Nginx_. Any version starting from the 0.7
+CentOS 7
+~~~~~~~~
+
+For users of official stable Nginx repository, `extra packages repository with dynamic modules <https://www.getpagespeed.com/redhat>`__ is available and fancyindex is included.
+
+Install directly: 
+
+    yum install https://extras.getpagespeed.com/redhat/7/x86_64/RPMS/nginx-module-fancyindex-1.12.0.0.4.1-1.el7.gps.x86_64.rpm
+
+Alternatively, add extras repository first (for future updates) and install the module:
+
+    yum install nginx-module-fancyindex
+
+Other platforms
+~~~~~~~~~~~~~~~
+
+In most other cases you will need the sources for Nginx_. Any version starting from the 0.7
 series onwards will work.  Note that the modules *might* compile with
 versions in the 0.6 series by applying ``nginx-0.6-support.patch``, but this
 is unsupported (YMMV).
