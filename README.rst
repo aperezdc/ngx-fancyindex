@@ -31,11 +31,11 @@ CentOS 7
 
 For users of official stable Nginx repository, `extra packages repository with dynamic modules <https://www.getpagespeed.com/redhat>`__ is available and fancyindex is included.
 
-Install directly: 
+Install directly:: 
 
     yum install https://extras.getpagespeed.com/redhat/7/x86_64/RPMS/nginx-module-fancyindex-1.12.0.0.4.1-1.el7.gps.x86_64.rpm
 
-Alternatively, add extras repository first (for future updates) and install the module:
+Alternatively, add extras repository first (for future updates) and install the module::
 
     yum install nginx-module-fancyindex
 
