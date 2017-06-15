@@ -29,7 +29,7 @@ Requirements
 CentOS 7
 ~~~~~~~~
 
-For users of official stable Nginx repository, `extra packages repository with dynamic modules <https://www.getpagespeed.com/redhat>`__ is available and fancyindex is included.
+For users of the  `official stable <https://www.nginx.com/resources/wiki/start/topics/tutorials/install/>`__  Nginx repository, `extra packages repository with dynamic modules <https://www.getpagespeed.com/redhat>`__ is available and fancyindex is included.
 
 Install directly:: 
 
@@ -38,6 +38,10 @@ Install directly::
 Alternatively, add extras repository first (for future updates) and install the module::
 
     yum install nginx-module-fancyindex
+    
+Then load the module in `/etc/nginx/nginx.conf` using
+
+   load_module "modules/ngx_http_fancyindex_module.so";
 
 Other platforms
 ~~~~~~~~~~~~~~~
