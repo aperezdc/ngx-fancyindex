@@ -5,13 +5,16 @@ compiler:
   - gcc
 
 env:
-  # Mainline
+  # Mainline.
+  - NGINX=1.13.4
+  - NGINX=1.13.4  DYNAMIC=1
+  # Stable.
+  - NGINX=1.12.1
+  - NGINX=1.12.1  DYNAMIC=1
+  # Other configurations.
   - NGINX=1.11.6
-  - NGINX=1.11.6  DYNAMIC=1
-  # Stable
   - NGINX=1.10.2
-  - NGINX=1.10.2  DYNAMIC=1
-  # Other configurations
+  # Version 1.9.15 was the first with loadable module support.
   - NGINX=1.9.15
   - NGINX=1.9.15  DYNAMIC=1
   - NGINX=1.8.1
