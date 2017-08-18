@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Fixed
+- Sorting by file size now also works correctly for directories which contain
+  files of sizes bigger than `INT_MAX`. (Bug report by and fix suggestion by
+  Chris Young.)
 
 ## [0.4.1] - 2016-08-18
 ### Added
