@@ -2,10 +2,24 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+
+## [0.4.2] - 2017-08-19
+### Changed
+- Generated HTML from the default template is now proper HTML5, and it should
+  pass validation (#52).
+- File sizes now have decimal positions when using `fancyindex_exact_size off`.
+  (Patch by Anders Trier <<anders.trier.olesen@gmail.com>>.)
+- Multiple updates to `README.rst` (Patches by Danila Vershinin
+  <<ciapnz@gmail.com>>, Iulian Onofrei, Lilian Besson, and Nick Geoghegan
+  <<nick@nickgeoghegan.net>>.)
+
 ### Fixed
 - Sorting by file size now also works correctly for directories which contain
-  files of sizes bigger than `INT_MAX`. (Bug report by and fix suggestion by
-  Chris Young.)
+  files of sizes bigger than `INT_MAX`. (#74, fix suggestion by Chris Young.)
+- Custom headers which fail to declare an UTF-8 encoding no longer cause table
+  header arrows to be rendered incorrectly by browsers (#50).
+- Fix segmentation fault when opening directories with empty files (#61, patch
+  by Catgirl <<cat@wolfgirl.org>>.)
 
 ## [0.4.1] - 2016-08-18
 ### Added
@@ -104,7 +118,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.6...v0.4.0
 [0.3.6]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.3.5...v0.3.6
