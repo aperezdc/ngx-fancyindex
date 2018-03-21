@@ -67,9 +67,9 @@ static const u_char t06_list1[] = ""
 ;
 static const u_char t_parentdir_entry[] = ""
 "<tr>"
-"<td><a href=\"../?C=N&amp;O=A\">Parent directory/</a></td>"
-"<td>-</td>"
-"<td>-</td>"
+"<td class=\"link\"><a href=\"../?C=N&amp;O=A\">Parent directory/</a></td>"
+"<td class=\"size\">-</td>"
+"<td class=\"date\">-</td>"
 "</tr>"
 "\n"
 ;
