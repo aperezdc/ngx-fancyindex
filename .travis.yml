@@ -6,12 +6,14 @@ compiler:
 
 env:
   # Mainline.
-  - NGINX=1.13.10
-  - NGINX=1.13.10  DYNAMIC=1
+  - NGINX=1.13.12
+  - NGINX=1.13.12  DYNAMIC=1
   # Stable.
+  - NGINX=1.14.0
+  - NGINX=1.14.0  DYNAMIC=1
+  # Other configurations.
   - NGINX=1.12.2
   - NGINX=1.12.2  DYNAMIC=1
-  # Other configurations.
   - NGINX=1.11.6
   - NGINX=1.10.2
   # Version 1.9.15 was the first with loadable module support.
