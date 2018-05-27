@@ -1229,7 +1229,7 @@ ngx_http_fancyindex_cmp_entries_size_desc(const void *one, const void *two)
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
     ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
 
-    return (first->size > second->size) - (first->size < second->size);
+    return (first->size < second->size) - (first->size > second->size);
 }
 
 
