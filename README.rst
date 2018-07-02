@@ -39,7 +39,7 @@ Alternatively, add extras repository first (for future updates) and install the 
 
     yum install nginx-module-fancyindex
     
-Then load the module in `/etc/nginx/nginx.conf` using
+Then load the module in `/etc/nginx/nginx.conf` using::
 
    load_module "modules/ngx_http_fancyindex_module.so";
 
@@ -51,7 +51,7 @@ series onwards will work.  Note that the modules *might* compile with
 versions in the 0.6 series by applying ``nginx-0.6-support.patch``, but this
 is unsupported (YMMV).
 
-In order to use the fancyindex_header_ and fancyindex_footer_ directives
+In order to use the ``fancyindex_header_`` and ``fancyindex_footer_`` directives
 you will also need the `ngx_http_addition_module <http://nginx.org/en/docs/http/ngx_http_addition_module.html>`_
 built into Nginx.
 
@@ -78,7 +78,8 @@ Building
 
    Since version 0.4.0, the module can also be built as a
    `dynamic module <https://www.nginx.com/resources/wiki/extending/converting/>`_,
-   using ``--add-dynamic-module=…`` instead and ``load_module "modules/ngx_http_fancyindex_module.so";`
+   using ``--add-dynamic-module=…`` instead and
+   ``load_module "modules/ngx_http_fancyindex_module.so";``
    in the configuration file
 
 4. Build and install the software::
@@ -114,7 +115,7 @@ achieved using the module:
   `@TheInsomniac <https://github.com/TheInsomniac>`__. Uses custom header and
   footer.
 * `Theme <https://github.com/Naereen/Nginx-Fancyindex-Theme>`__ by
-  `Naereen <https://github.com/Naereen/>`__. Uses custom header and footer, the
+  `@Naereen <https://github.com/Naereen/>`__. Uses custom header and footer, the
   header includes search field to filter by filename using JavaScript.
 
 
