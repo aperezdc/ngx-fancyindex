@@ -1,0 +1,24 @@
+#! /bin/bash
+cat <<---
+This test fetches the root directory served by Nginx, which has no index
+file, and checks the output contains a few HTML elements know to exist in
+a directory index.
+--
+use pup
+nginx_start
+
+content=$( fetch )
+
+# Check page title
+[[ $(pup -p title text{} <<< "${content}") = 'Index of /' ]]
+
+# Check table headers
+[[ $(pup -n body table thead th a:first-child <<< "${content}") -eq 3 ]]
+{
+	read -r name_label
+	read -r size_label
+	read -r date_label
+} < <(  pup -p body table thead th a:first-child text{} <<< "${content}" )
+[[ ${name_label} = File\ Name ]]
+[[ ${size_label} = File\ Size ]]
+[[ ${date_label} = Date ]]
