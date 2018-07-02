@@ -117,6 +117,12 @@ achieved using the module:
 * `Theme <https://github.com/Naereen/Nginx-Fancyindex-Theme>`__ by
   `@Naereen <https://github.com/Naereen/>`__. Uses custom header and footer, the
   header includes search field to filter by filename using JavaScript.
+* `Theme <https://github.com/fraoustin/Nginx-Fancyindex-Theme>`__ by
+  `@fraoustin <https://github.com/fraoustin>`__. Responsive theme using
+  Material Design elements.
+* `Theme <https://github.com/alehaa/nginx-fancyindex-flat-theme>`__ by
+  `@alehaa <https://github.com/alehaa>`__. Simple, flat theme based on
+  Bootstrap 4 and FontAwesome.
 
 
 Directives
