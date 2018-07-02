@@ -1,0 +1,81 @@
+#! /bin/bash
+set -e
+
+declare -r VERSION='0.4.0'
+declare -r SHASUMS='\
+75c27caa0008a9cc639beb7506077ad9f32facbffcc4e815e999eaf9588a527e  pup_v0.4.0_darwin_386.zip
+c539a697efee2f8e56614a54cb3b215338e00de1f6a7c2fa93144ab6e1db8ebe  pup_v0.4.0_darwin_amd64.zip
+259eee82c7d7d766f1b8f93a382be21dcfefebc855a9ce8124fd78717f9df439  pup_v0.4.0_dragonfly_amd64.zip
+ba0fe5e87a24cab818e5d2efdd7540714ddfb1b7246600135915c666fdf1a601  pup_v0.4.0_freebsd_386.zip
+1838ef84ec1f961e8009d19a4d1e6a23b926ee315da3d60c08878f3d69af5692  pup_v0.4.0_freebsd_amd64.zip
+6886a9c60a912a810d012610bc3f784f0417999ff7d7df833a0695b9af60395b  pup_v0.4.0_freebsd_arm.zip
+e486b32ca07552cd3aa713cbf2f9d1b6e210ddb51d34b3090c7643f465828057  pup_v0.4.0_linux_386.zip
+ec3d29e9fb375b87ac492c8b546ad6be84b0c0b49dab7ff4c6b582eac71ba01c  pup_v0.4.0_linux_amd64.zip
+c09b669fa8240f4f869dee7d34ee3c7ea620a0280cee1ea7d559593bcdd062c9  pup_v0.4.0_linux_arm64.zip
+ebf70b3c76c02e0202c94af7ef06dcb3ecc866d1b9b84453d43fe01fa5dd5870  pup_v0.4.0_linux_arm.zip
+a98a4d1f3c3a103e8ebe1a7aba9cb9d3cb045003208ca6f5f3d54889a225f267  pup_v0.4.0_linux_mips64le.zip
+8e471cf6cfa118b2497bb3f42a7a48c52d0096107f748f37216855c8ab94f8e5  pup_v0.4.0_linux_mips64.zip
+cfda9375eba65f710e052b1b59893c228c3fc92b0510756bb3f02c25938eee30  pup_v0.4.0_linux_ppc64le.zip
+91a1e07ffb2c373d6053252e4de732f5db78c8eace49c6e1a0ef52402ecdf56c  pup_v0.4.0_linux_ppc64.zip
+fdc9b28a3daac5ad096023e1647292a7eccea6d9b1686f871307dae9f3bd064f  pup_v0.4.0_nacl_386.zip
+c8d3c9b56783bd5a55446f4580e1835606b2b945da2d1417ed509c5927a5f8bc  pup_v0.4.0_nacl_amd64p32.zip
+48c068c4353672528c8c3447a536208b0719f1e6d0f8fab8416b38b63ad0c1d9  pup_v0.4.0_nacl_arm.zip
+7a27497b2f0be95c51bb2cbc25da12efba682c4f766bc5abc5742e9fc8d1eeb0  pup_v0.4.0_netbsd_386.zip
+71a1808eb1b6442aa45d1de9e1c4fca543b2754c1aff5ba3d62b3456f9519691  pup_v0.4.0_netbsd_amd64.zip
+928e6691b11c68ae3f28826848a13dc5c1c9673848fe7cf7f80dd76c9fb6e8a6  pup_v0.4.0_netbsd_arm.zip
+5aca20a9b3264d2fde5a8d32f213c434edf9570ee6fae18953b8fff09d2976e2  pup_v0.4.0_openbsd_386.zip
+e965c6f04b897240d84c60e2c18226deb231a657c5583680f58a61051ff5a100  pup_v0.4.0_openbsd_amd64.zip
+30bc88a1e06606f4f3449af9fbf586f97c2e958677460a72bb1a168f67c4911c  pup_v0.4.0_openbsd_arm.zip
+9d50decf4572292f187cfec84660648d648336bc6109e1f032b1699ba1d28549  pup_v0.4.0_plan9_386.zip
+1b2a6bd2388ddd691ca429497d88b2b047ec8dfb7bce9436925cb2f30632bf8e  pup_v0.4.0_plan9_amd64.zip
+0835de9c10a9e2b3b958b82d148da49eaafc695fe4a018cbaf7bb861b455583f  pup_v0.4.0_solaris_amd64.zip
+01acae220b69fb1ba8477d0e7f4d7669ef5de147966dc819cf75a845af74c5f3  pup_v0.4.0_windows_386.zip
+6755cbd43e94eaf173689e93e914c7056a2249c2977e5b90024fb397f9b45ba4  pup_v0.4.0_windows_amd64.zip
+'
+
+declare -r BASEURL="https://github.com/ericchiang/pup/releases/download/v${VERSION}"
+declare -r TDIR=$(dirname "$0")
+ARCH=''
+OS=''
+
+case $(uname -m) in
+	x86_64 | amd64 ) ARCH=amd64 ;;
+	i[3456]86 ) ARCH=386 ;;
+esac
+
+OS=$(uname -s | tr 'A-Z' 'a-z')
+case ${OS} in
+	linux | freebsd | openbsd | netbsd | darwin ) ;;
+	* ) OS=''
+esac
+
+if [[ -z ${ARCH} || -z ${OS} ]] ; then
+	echo "pup ${VERSION} is not available for $(uname -s) on $(uname -m)" 1>&2
+	exit 1
+fi
+
+declare -r ZIPFILE="pup_v${VERSION}_${OS}_${ARCH}.zip"
+EXPECT_SHA=''
+
+while read sum fname ; do
+	if [[ ${fname} = ${ZIPFILE} ]] ; then
+		EXPECT_SHA=${sum}
+		break
+	fi
+done <<< "${SHASUMS}"
+
+wget -cO "${TDIR}/${ZIPFILE}" "${BASEURL}/${ZIPFILE}"
+
+read -r GOT_SHA _ < <( sha256sum "${TDIR}/${ZIPFILE}" )
+if [[ ${EXPECT_SHA} = ${GOT_SHA} ]] ; then
+	echo "Checksum for ${ZIPFILE} verified :-)"
+else
+	rm -f "${TDIR}/${ZIPFILE}" "${TDIR}/pup"
+	echo "Checksum for ${ZIPFILE} does not match :-("
+	echo "   Expected: ${EXPECT_SHA}"
+	echo "        Got: ${GOT_SHA}"
+	exit 2
+fi 1>&2
+
+rm -f "${TDIR}/pup"
+unzip "${TDIR}/${ZIPFILE}" pup -d "${TDIR}"
