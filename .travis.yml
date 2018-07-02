@@ -35,4 +35,5 @@ cache: ccache
 
 script:
   - echo "NGINX=${NGINX} ${DYNAMIC:+DYNAMIC=${DYNAMIC}}"
+  - t/get-pup || echo 'Tests needing pup will be skipped'
   - t/build-and-run ${NGINX} ${DYNAMIC}
