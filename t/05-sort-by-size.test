@@ -1,0 +1,36 @@
+#! /bin/bash
+cat <<---
+This test validates that the sorting by file size works.
+--
+use pup
+nginx_start
+
+# Ascending sort.
+previous=''
+while read -r size ; do
+	if [[ ${size} = - ]] ; then
+		continue
+	fi
+	if [[ -z ${previous} ]] ; then
+		previous=${size}
+		continue
+	fi
+	[[ ${previous} -le ${size} ]] || fail \
+		'Size %d should be smaller than %d\n' "${previous}" "${size}"
+done < <( fetch '/?C=S&O=A' \
+	    | pup -p body table tbody 'td:nth-child(2)' text{} )
+
+# Descending sort.
+previous=''
+while read -r size ; do
+	if [[ ${size} = - ]] ; then
+		continue
+	fi
+	if [[ -z ${previous} ]] ; then
+		previous=${size}
+		continue
+	fi
+	[[ ${previous} -ge ${size} ]] || fail \
+		'Size %d should be greater than %d\n' "${previous}" "${size}"
+done < <( fetch '/?C=S&O=D' \
+	    | pup -p body table tbody 'td:nth-child(2)' text{} )
