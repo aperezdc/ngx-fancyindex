@@ -39,6 +39,22 @@ readonly NGINX_PID="${PREFIX}/logs/nginx.pid"
 rm -f "${NGINX_CONF}" "${NGINX_PID}"
 mkdir -p "${PREFIX}/logs"
 
+function pup () {
+	if [[ -x ${TESTDIR}/pup ]] ; then
+		"${TESTDIR}/pup" "$@"
+	else
+		skip 'Test uses "pup", which is not available'
+	fi
+}
+
+function use () {
+	case $1 in
+		pup ) [[ -x ${TESTDIR}/pup ]] \
+			|| skip 'Test uses "pup", which is unavailable\n' ;;
+		* ) warn "Invalid 'use' flag: '%s'\n'" "$1" ;;
+	esac
+}
+
 function nginx () {
 	env - PATH="${PATH}" "${PREFIX}/sbin/nginx" "$@"
 }
