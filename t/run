@@ -25,6 +25,7 @@ readonly dynamic
 
 declare -a t_pass=( )
 declare -a t_fail=( )
+declare -a t_skip=( )
 
 for t in `ls "$T"/*.test | sort -R` ; do
 	name="t/${t##*/}"
@@ -43,6 +44,9 @@ for t in `ls "$T"/*.test | sort -R` ; do
 	if bash -e "${shfile}" > "${outfile}" 2> "${errfile}" ; then
 		t_pass+=( "${name}" )
 		printf '[1;32mpassed[0;0m\n'
+	elif [[ $? -eq 111 ]] ; then
+		t_skip+=( "${name}" )
+		printf '[1;33mskipped[0;0m\n'
 	else
 		t_fail+=( "${name}" )
 		printf '[1;31mfailed[0;0m\n'
@@ -59,8 +63,23 @@ for name in "${t_fail[@]}" ; do
 	echo
 done
 
-printf '[1m===[0m passed/failed/total: [1;32m%d[0;0m/[1;31m%d[0;0m/[1m%d[0m\n' \
-	${#t_pass[@]} ${#t_fail[@]} $(( ${#t_pass[@]} + ${#t_fail[@]} ))
+if [[ ${#t_skip[@]} -gt 0 ]] ; then
+	echo
+	printf '[1;33mSkipped tests:\n[0;0m'
+	for name in "${t_skip[@]}" ; do
+		reason=$(grep '^(\-\-) ' "${name}.err" | head -1)
+		if [[ -z ${reason} ]] ; then
+			reason='No reason given'
+		else
+			reason=${reason:5}
+		fi
+		printf ' - %s: %s\n' "${name}" "${reason:-No reason given}"
+	done
+	echo
+fi
+
+printf '[1m===[0m passed/skipped/failed/total: [1;32m%d[0;0m/[1;33m%d[0;0m/[1;31m%d[0;0m/[1m%d[0m\n' \
+	${#t_pass[@]} ${#t_skip[@]} ${#t_fail[@]} $(( ${#t_pass[@]} + ${#t_fail[@]} ))
 
 if [[ ${#t_fail[@]} -gt 0 ]] ; then
 	exit 1

@@ -72,13 +72,19 @@ function fetch () {
 	wget "${opts[@]}" -O- "http://localhost:8888${1:-/}" 2>&1
 }
 
+function skip () {
+	printf '(--) '
+	printf "$@"
+	exit 111
+} 1>&2
+
 function fail () {
-	printf "(FF) "
+	printf '(FF) '
 	printf "$@"
 	exit 1
 } 1>&2
 
 function warn () {
-	printf "(WW)"
+	printf '(WW) '
 	printf "$@"
 } 1>&2
