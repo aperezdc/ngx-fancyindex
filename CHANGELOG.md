@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- Use correct character references for `&` characters in table sorter URLs
+  within the template.
+
 ## [0.4.3] - 2018-07-03
 ### Added
 - Table cells now have class names, which allows for better CSS styling.
