@@ -1,0 +1,19 @@
+#! /bin/bash
+cat <<---
+Bug #95: FancyIndex does not encode square brackets
+https://github.com/aperezdc/ngx-fancyindex/issues/95
+--
+use pup
+
+# Prepare a directory with a file that contains square brackets in the name.
+mkdir -p "${TESTDIR}/bug95"
+touch "${TESTDIR}"/bug95/'bug[95].txt'
+
+nginx_start
+content=$(fetch /bug95/)
+test -n "${content}" || fail 'Empty response'
+
+expected_href='bug%5B95%5D.txt'
+obtained_href=$(pup -p body tbody 'tr:nth-child(2)' a 'attr{href}' <<< "${content}")
+test "${expected_href}" = "${obtained_href}" || \
+	fail 'Expected: %s - Obtained: %s' "${expected_href}" "${obtained_href}"

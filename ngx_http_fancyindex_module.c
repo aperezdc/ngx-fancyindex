@@ -258,7 +258,7 @@ static char *ngx_http_fancyindex_ignore(ngx_conf_t    *cf,
                                         void          *conf);
 
 static uintptr_t
-    ngx_fancyindex_escape_uri(u_char *dst, u_char*src, size_t size);
+    ngx_fancyindex_escape_filename(u_char *dst, u_char*src, size_t size);
 
 /*
  * These are used only once per handler invocation. We can tell GCC to
@@ -410,8 +410,15 @@ static const ngx_str_t css_href_post =
     ngx_string("\" type=\"text/css\"/>\n");
 
 
+#ifdef NGX_ESCAPE_URI_COMPONENT
+static inline uintptr_t
+ngx_fancyindex_escape_filename(u_char *dst, u_char *src, size_t size)
+{
+    return ngx_escape_uri(dst, src, size, NGX_ESCAPE_URI_COMPONENT);
+}
+#else /* !NGX_ESCAPE_URI_COMPONENT */
 static uintptr_t
-ngx_fancyindex_escape_uri(u_char *dst, u_char *src, size_t size)
+ngx_fancyindex_escape_filename(u_char *dst, u_char *src, size_t size)
 {
     /*
      * The ngx_escape_uri() function will not escape colons or the
@@ -483,6 +490,7 @@ ngx_fancyindex_escape_uri(u_char *dst, u_char *src, size_t size)
         return escapes + uescapes;
     }
 }
+#endif /* NGX_ESCAPE_URI_COMPONENT */
 
 
 static ngx_inline ngx_buf_t*
@@ -716,9 +724,9 @@ make_content_buf(
             return ngx_http_fancyindex_error(r, &dir, &path);
 
         ngx_cpystrn(entry->name.data, ngx_de_name(&dir), len + 1);
-        entry->escape = 2 * ngx_fancyindex_escape_uri(NULL,
-                                                      ngx_de_name(&dir),
-                                                      len);
+        entry->escape = 2 * ngx_fancyindex_escape_filename(NULL,
+                                                           ngx_de_name(&dir),
+                                                           len);
 
         entry->dir     = ngx_de_is_dir(&dir);
         entry->mtime   = ngx_de_mtime(&dir);
@@ -922,9 +930,9 @@ make_content_buf(
         b->last = ngx_cpymem_ssz(b->last, "<tr><td class=\"link\"><a href=\"");
 
         if (entry[i].escape) {
-            ngx_fancyindex_escape_uri(b->last,
-                                      entry[i].name.data,
-                                      entry[i].name.len);
+            ngx_fancyindex_escape_filename(b->last,
+                                           entry[i].name.data,
+                                           entry[i].name.len);
 
             b->last += entry[i].name.len + entry[i].escape;
 
