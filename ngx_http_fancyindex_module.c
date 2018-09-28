@@ -154,6 +154,7 @@ typedef struct {
     ngx_uint_t name_length;  /**< Maximum length of file names in bytes. */
     ngx_flag_t hide_symlinks;/**< Hide symbolic links in listings. */
     ngx_flag_t show_path;    /**< Whether to display or not the path + '</h1>' after the header */
+    ngx_flag_t hide_parent;  /**< Hide parent directory. */
 
     ngx_str_t  header;       /**< File name for header, or empty if none. */
     ngx_str_t  footer;       /**< File name for footer, or empty if none. */
@@ -359,6 +360,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       ngx_conf_set_flag_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, show_path),
+      NULL },
+
+    { ngx_string("fancyindex_hide_parent_dir"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, hide_parent),
       NULL },
 
     { ngx_string("fancyindex_time_format"),
@@ -909,7 +917,7 @@ make_content_buf(
     tp = ngx_timeofday();
 
     /* "Parent dir" entry, always first if displayed */
-    if (r->uri.len > 1) {
+    if (r->uri.len > 1 && alcf->hide_parent == 0) {
         b->last = ngx_cpymem_ssz(b->last,
                                  "<tr>"
                                  "<td class=\"link\"><a href=\"../");
@@ -1323,6 +1331,7 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
     conf->ignore        = NGX_CONF_UNSET_PTR;
     conf->hide_symlinks = NGX_CONF_UNSET;
     conf->show_path     = NGX_CONF_UNSET;
+    conf->hide_parent   = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -1351,6 +1360,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_ptr_value(conf->ignore, prev->ignore, NULL);
     ngx_conf_merge_value(conf->hide_symlinks, prev->hide_symlinks, 0);
+    ngx_conf_merge_value(conf->hide_parent, prev->hide_parent, 0);
 
     /* Just make sure we haven't disabled the show_path directive without providing a custom header */
     if (conf->show_path == 0 && conf->header.len == 0)
