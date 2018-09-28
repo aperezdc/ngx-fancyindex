@@ -247,6 +247,14 @@ fancyindex_hide_symlinks
 :Description:
   When enabled, generated listings will not contain symbolic links.
 
+fancyindex_hide_parent_dir
+~~~~~~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_hide_parent_dir* [*on* | *off*]
+:Default: fancyindex_hide_parent_dir off
+:Context: http, server, location
+:Description:
+  When enabled, it will not show parent directory.
+
 fancyindex_localtime
 ~~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_localtime* [*on* | *off*]
