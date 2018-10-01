@@ -11,7 +11,7 @@ Nginx Fancy Index module
 The Fancy Index module makes possible the generation of file listings, like
 the built-in `autoindex <http://wiki.nginx.org/NginxHttpAutoindexModule>`__
 module does, but adding a touch of style. This is possible because the module
-module allows a certain degree of customization of the generated content:
+allows a certain degree of customization of the generated content:
 
 * Custom headers. Either local or stored remotely.
 * Custom footers. Either local or stored remotely.
@@ -52,7 +52,7 @@ versions in the 0.6 series by applying ``nginx-0.6-support.patch``, but this
 is unsupported (YMMV).
 
 In order to use the ``fancyindex_header_`` and ``fancyindex_footer_`` directives
-you will also need the `ngx_http_addition_module <http://nginx.org/en/docs/http/ngx_http_addition_module.html>`_
+you will also need the `ngx_http_addition_module <https://nginx.org/en/docs/http/ngx_http_addition_module.html>`_
 built into Nginx.
 
 
@@ -217,7 +217,7 @@ fancyindex_header
    into Nginx.
 
 fancyindex_show_path
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_show_path* [*on* | *off*]
 :Default: fancyindex_show_path on
 :Context: http, server, location
@@ -262,7 +262,7 @@ fancyindex_time_format
 :Context: http, server, location
 :Description:
   Format string used for timestamps. The format specifiers are a subset of
-  those supported by the `strftime <http://linux.die.net/man/3/strftime>`_
+  those supported by the `strftime <https://linux.die.net/man/3/strftime>`_
   function, and the behavior is locale-independent (for example, day and month
   names are always in English). The supported formats are:
 
@@ -295,6 +295,6 @@ fancyindex_time_format
   * ``%Y``: Year as a decimal number including the century.
 
 
-.. _nginx: http://nginx.net
+.. _nginx: https://nginx.org
 
 .. vim:ft=rst:spell:spelllang=en:
