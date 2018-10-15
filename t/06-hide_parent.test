@@ -1,0 +1,23 @@
+#! /bin/bash
+cat <<---
+This test check the output using "fancyindex_hide_parent_dir on"
+--
+use pup
+nginx_start 'fancyindex_hide_parent_dir on;'
+
+content=$( fetch /child-directory/ )
+
+# Check page title
+[[ $(pup -p title text{} <<< "${content}") = "Index of /child-directory/" ]]
+
+# Check table headers
+[[ $(pup -n body table tbody tr:first-child td <<< "${content}") -eq 3 ]]
+{
+	read -r name_label
+	read -r size_label
+	read -r date_label
+} < <(  pup -p body table tbody tr:first-child td text{} <<< "${content}" )
+[[ ${name_label} != Parent\ Directory/ ]]
+[[ ${name_label} = empty-file.txt ]]
+[[ ${size_label} != - ]]
+[[ ${date_label} != - ]]
