@@ -930,7 +930,8 @@ make_content_buf(
                                  "\">Parent directory/</a></td>"
                                  "<td class=\"size\">-</td>"
                                  "<td class=\"date\">-</td>"
-                                 "</tr>");
+                                 "</tr>"
+                                 CRLF);
     }
 
     /* Entries for directories and files */
