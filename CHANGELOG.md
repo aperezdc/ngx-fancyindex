@@ -3,9 +3,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.4] - 2020-02-19
+### Added
+- New option `fancyindex_hide_parent_dir`, which disables generating
+  links to parent directories in listings. (Patch by Kawai Ryota
+  <<admin@mail.kr-kp.com>>.)
+
+### Changed
+- Each table row is now separated by a new line (as a matter of fact,
+  a `CRLF` sequence), which makes it easier to parse output using simple
+  text tools. (Patch by Anders Trier <<anders.trier.olesen@gmail.com>>.)
+- Some corrections and additions to the README file. (Patches by Nicolas
+  Carpi <<nicolas.carpi@curie.fr>> and David Beitey <<david@davidjb.com>>.)
+
 ### Fixed
 - Use correct character references for `&` characters in table sorter URLs
-  within the template.
+  within the template (Patch by David Beitey <<david@davidjb.com>>.)
+- Properly encode filenames when used as URI components.
 
 ## [0.4.3] - 2018-07-03
 ### Added
@@ -134,7 +148,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.0...v0.4.1
