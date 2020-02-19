@@ -1,0 +1,10 @@
+#! /bin/sh
+set -e
+
+GIT_TAG=$(git describe --tags HEAD)
+VERSION=${GIT_TAG#v}
+PV="ngx-fancyindex-${VERSION}"
+
+set -x
+git archive --worktree-attributes --prefix="${PV}/" -o "${PV}.tar" "${GIT_TAG}"
+xz -f9 "${PV}.tar"
