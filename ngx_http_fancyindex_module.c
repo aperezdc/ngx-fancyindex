@@ -890,19 +890,41 @@ make_content_buf(
 
     /* Sort entries, if needed */
     if (entries.nelts > 1) {
-        /* Use ngx_sort for stability */ 
-        ngx_sort(entry, (size_t) entries.nelts,
-                  sizeof(ngx_http_fancyindex_entry_t),
-                  sort_cmp_func);
-
         if (alcf->dirs_first)
         {
-            /* Sort directories first */
-            ngx_sort(entry, (size_t) entries.nelts,
-                      sizeof(ngx_http_fancyindex_entry_t),
-                      ngx_http_fancyindex_cmp_entries_dirs_first);
-        }
+            ngx_http_fancyindex_entry_t *l, *r;
 
+            l = entry;
+            r = entry + entries.nelts - 1;
+            while (l < r)
+            {
+                while (l < r && l->dir)
+                    l++;
+                while (l < r && !r->dir)
+                    r--;
+                if (l < r) {
+                    /* Now l points a file while r points a directory */
+                    ngx_http_fancyindex_entry_t tmp;
+                    tmp = *l;
+                    *l = *r;
+                    *r = tmp;
+                }
+            }
+            if (r->dir)
+                r++;
+            
+            if (r > entry)
+                /* Sort directories */
+                ngx_qsort(entry, (size_t)(r - entry),
+                        sizeof(ngx_http_fancyindex_entry_t), sort_cmp_func);
+            if (r < entry + entries.nelts)
+                /* Sort files */
+                ngx_qsort(r, (size_t)(entry + entries.nelts - r),
+                        sizeof(ngx_http_fancyindex_entry_t), sort_cmp_func);
+        } else {
+            ngx_qsort(entry, (size_t)entries.nelts,
+                    sizeof(ngx_http_fancyindex_entry_t), sort_cmp_func);
+        }
     }
 
     /* Display the path, if needed */
