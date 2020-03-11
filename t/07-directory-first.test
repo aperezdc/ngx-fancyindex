@@ -1,0 +1,49 @@
+#! /bin/bash
+cat <<---
+This test check the output using "fancyindex_directories_first on"
+--
+
+for d in "008d" "000d" "004d" ; do
+	mkdir -p "${TESTDIR}/dir_first/${d}"
+done
+for f in "005f" "001f" "003f"; do
+	touch "${TESTDIR}/dir_first/${f}"
+done
+for d in "006d" "002d" ; do
+	mkdir -p "${TESTDIR}/dir_first/${d}"
+done
+
+nginx_start 'fancyindex_directories_first on;'
+previous=''
+cur_type=''
+while read -r name ; do
+	case "$name" in
+	*Parent*)
+		;;
+	*d*)
+		echo "dir $name"
+		[[ "$cur_type" = f ]] && fail 'Directories should come before Files'
+		cur_type=d
+		if [[ -z ${previous} ]] ; then
+			previous=${name}
+		else
+			[[ ${previous} < ${name} ]] || fail \
+				'Name %s should come before %s\n' "${previous}" "${name}"
+		fi
+		;;
+	*f*)
+		echo "file $name"
+		[[ -z "$cur_type" ]] && fail 'Directories should come before Files'
+		if [[ "$cur_type" = d ]] ; then
+			cur_type=f
+			previous=${name}
+		else
+			[[ ${previous} < ${name} ]] || fail \
+				'Name %s should come before %s\n' "${previous}" "${name}"
+		fi
+		;;
+	esac
+done < <( fetch '/dir_first/' \
+		| pup -p body table tbody 'td:nth-child(1)' text{} )
+
+nginx_is_running || fail "Nginx died"
