@@ -232,17 +232,17 @@ typedef struct {
 
 static ngx_int_t ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_dirs_first(const void *one, const void *two);
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_name_desc(const void *one, const void *two);
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_size_desc(const void *one, const void *two);
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_mtime_desc(const void *one, const void *two);
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_name_asc(const void *one, const void *two);
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_size_asc(const void *one, const void *two);
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_mtime_asc(const void *one, const void *two);
 
 static ngx_int_t ngx_http_fancyindex_error(ngx_http_request_t *r,
@@ -575,7 +575,7 @@ make_content_buf(
 {
     ngx_http_fancyindex_entry_t *entry;
 
-    ngx_int_t (*sort_cmp_func) (const void*, const void*);
+    int (*sort_cmp_func)(const void *, const void *);
     const char  *sort_url_args = "";
 
     off_t        length;
@@ -1260,7 +1260,7 @@ ngx_http_fancyindex_cmp_entries_dirs_first(const void *one, const void *two)
 }
 
 
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
 ngx_http_fancyindex_cmp_entries_name_desc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
@@ -1270,7 +1270,7 @@ ngx_http_fancyindex_cmp_entries_name_desc(const void *one, const void *two)
 }
 
 
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
 ngx_http_fancyindex_cmp_entries_size_desc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
@@ -1280,7 +1280,7 @@ ngx_http_fancyindex_cmp_entries_size_desc(const void *one, const void *two)
 }
 
 
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
 ngx_http_fancyindex_cmp_entries_mtime_desc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
@@ -1290,7 +1290,7 @@ ngx_http_fancyindex_cmp_entries_mtime_desc(const void *one, const void *two)
 }
 
 
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
 ngx_http_fancyindex_cmp_entries_name_asc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
@@ -1300,7 +1300,7 @@ ngx_http_fancyindex_cmp_entries_name_asc(const void *one, const void *two)
 }
 
 
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
 ngx_http_fancyindex_cmp_entries_size_asc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
@@ -1310,7 +1310,7 @@ ngx_http_fancyindex_cmp_entries_size_asc(const void *one, const void *two)
 }
 
 
-static ngx_int_t ngx_libc_cdecl
+static int ngx_libc_cdecl
 ngx_http_fancyindex_cmp_entries_mtime_asc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
