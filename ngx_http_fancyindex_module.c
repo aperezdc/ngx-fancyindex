@@ -230,8 +230,6 @@ typedef struct {
 
 
 
-static ngx_int_t ngx_libc_cdecl
-    ngx_http_fancyindex_cmp_entries_dirs_first(const void *one, const void *two);
 static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_name_desc(const void *one, const void *two);
 static int ngx_libc_cdecl
@@ -1240,23 +1238,6 @@ add_builtin_header:
     }
 
     return (r != r->main) ? rc : ngx_http_send_special(r, NGX_HTTP_LAST);
-}
-
-static ngx_int_t ngx_libc_cdecl
-ngx_http_fancyindex_cmp_entries_dirs_first(const void *one, const void *two)
-{
-    ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
-    ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
-
-    /* move the directories to the start */
-    if (first->dir && !second->dir) {
-        return -1;
-    }
-    if (!first->dir && second->dir) {
-        return 1;
-    }
-
-    return 0;
 }
 
 
