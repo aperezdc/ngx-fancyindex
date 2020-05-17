@@ -146,22 +146,23 @@ ngx_fancyindex_timefmt (u_char *buffer, const ngx_str_t *fmt, const ngx_tm_t *tm
  * commands defined in the module do fill in the members of this structure.
  */
 typedef struct {
-    ngx_flag_t enable;       /**< Module is enabled. */
-    ngx_uint_t default_sort; /**< Default sort criterion. */
-    ngx_flag_t dirs_first;   /**< Group directories together first when sorting */
-    ngx_flag_t localtime;    /**< File mtime dates are sent in local time. */
-    ngx_flag_t exact_size;   /**< Sizes are sent always in bytes. */
-    ngx_uint_t name_length;  /**< Maximum length of file names in bytes. */
-    ngx_flag_t hide_symlinks;/**< Hide symbolic links in listings. */
-    ngx_flag_t show_path;    /**< Whether to display or not the path + '</h1>' after the header */
-    ngx_flag_t hide_parent;  /**< Hide parent directory. */
+    ngx_flag_t enable;         /**< Module is enabled. */
+    ngx_uint_t default_sort;   /**< Default sort criterion. */
+    ngx_flag_t dirs_first;     /**< Group directories together first when sorting */
+    ngx_flag_t localtime;      /**< File mtime dates are sent in local time. */
+    ngx_flag_t exact_size;     /**< Sizes are sent always in bytes. */
+    ngx_uint_t name_length;    /**< Maximum length of file names in bytes. */
+    ngx_flag_t hide_symlinks;  /**< Hide symbolic links in listings. */
+    ngx_flag_t show_path;      /**< Whether to display or not the path + '</h1>' after the header */
+    ngx_flag_t hide_parent;    /**< Hide parent directory. */
+    ngx_flag_t show_dot_files; /**< Show files that start with a dot.*/
 
-    ngx_str_t  header;       /**< File name for header, or empty if none. */
-    ngx_str_t  footer;       /**< File name for footer, or empty if none. */
-    ngx_str_t  css_href;     /**< Link to a CSS stylesheet, or empty if none. */
-    ngx_str_t  time_format;  /**< Format used for file timestamps. */
+    ngx_str_t  header;         /**< File name for header, or empty if none. */
+    ngx_str_t  footer;         /**< File name for footer, or empty if none. */
+    ngx_str_t  css_href;       /**< Link to a CSS stylesheet, or empty if none. */
+    ngx_str_t  time_format;    /**< Format used for file timestamps. */
 
-    ngx_array_t *ignore;     /**< List of files to ignore in listings. */
+    ngx_array_t *ignore;       /**< List of files to ignore in listings. */
 } ngx_http_fancyindex_loc_conf_t;
 
 #define NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME       0
@@ -360,6 +361,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       ngx_conf_set_flag_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, show_path),
+      NULL },
+
+    { ngx_string("fancyindex_show_dotfiles"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, show_dot_files),
       NULL },
 
     { ngx_string("fancyindex_hide_parent_dir"),
@@ -654,7 +662,7 @@ make_content_buf(
 
         len = ngx_de_namelen(&dir);
 
-        if (ngx_de_name(&dir)[0] == '.')
+        if (!alcf->show_dot_files && ngx_de_name(&dir)[0] == '.')
             continue;
 
         if (alcf->hide_symlinks && ngx_de_is_link (&dir))
@@ -1323,16 +1331,17 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
      *    conf->time_format.len  = 0
      *    conf->time_format.data = NULL
      */
-    conf->enable        = NGX_CONF_UNSET;
-    conf->default_sort  = NGX_CONF_UNSET_UINT;
-    conf->dirs_first    = NGX_CONF_UNSET;
-    conf->localtime     = NGX_CONF_UNSET;
-    conf->name_length   = NGX_CONF_UNSET_UINT;
-    conf->exact_size    = NGX_CONF_UNSET;
-    conf->ignore        = NGX_CONF_UNSET_PTR;
-    conf->hide_symlinks = NGX_CONF_UNSET;
-    conf->show_path     = NGX_CONF_UNSET;
-    conf->hide_parent   = NGX_CONF_UNSET;
+    conf->enable         = NGX_CONF_UNSET;
+    conf->default_sort   = NGX_CONF_UNSET_UINT;
+    conf->dirs_first     = NGX_CONF_UNSET;
+    conf->localtime      = NGX_CONF_UNSET;
+    conf->name_length    = NGX_CONF_UNSET_UINT;
+    conf->exact_size     = NGX_CONF_UNSET;
+    conf->ignore         = NGX_CONF_UNSET_PTR;
+    conf->hide_symlinks  = NGX_CONF_UNSET;
+    conf->show_path      = NGX_CONF_UNSET;
+    conf->hide_parent    = NGX_CONF_UNSET;
+    conf->show_dot_files = NGX_CONF_UNSET;
 
     return conf;
 }
@@ -1352,6 +1361,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
     ngx_conf_merge_value(conf->show_path, prev->show_path, 1);
+    ngx_conf_merge_value(conf->show_dot_files, prev->show_dot_files, 0);
     ngx_conf_merge_uint_value(conf->name_length, prev->name_length, 50);
 
     ngx_conf_merge_str_value(conf->header, prev->header, "");
