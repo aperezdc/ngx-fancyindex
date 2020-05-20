@@ -1,3 +1,4 @@
 /.gitignore export-ignore
 /.travis.yml export-ignore
 /make-dist export-ignore
+t/* text eol=lf
