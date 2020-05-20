@@ -229,6 +229,15 @@ fancyindex_show_path
 .. warning:: This directive can be turned off only if a custom header is provided
    using fancyindex_header.
 
+fancyindex_show_dotfiles
+~~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_show_dotfiles* [*on* | *off*]
+:Default: fancyindex_show_dotfiles off
+:Context: http, server, location
+:Description:
+  Whether to list files that are proceeded with a dot. Normal convention is to
+  hide these. 
+
 fancyindex_ignore
 ~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_ignore string1 [string2 [... stringN]]*
