@@ -1,0 +1,21 @@
+#! /bin/bash
+cat <<---
+Test the option to show dotfiles.
+--
+# Turn it on.
+nginx_start 'fancyindex_show_dotfiles on;'
+on_content=$(fetch /show_dotfiles/)
+nginx_stop
+if [ $(grep '.okay'  <<< "${on_content}") -ne 0 ] ; then
+    exit 1
+fi
+
+# Turn it off.
+nginx_start
+off_content=$(fetch /show_dotfiles/)
+nginx_stop
+if [ $(grep '.okay'  <<< "${on_content}") -eq 0] ; then
+    exit 1
+fi
+
+exit 0
