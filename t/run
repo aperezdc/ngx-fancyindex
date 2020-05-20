@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 set -e
 
 if [[ $# -lt 1 || $# -gt 2 ]] ; then
