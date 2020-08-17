@@ -112,6 +112,59 @@ ngx_fancyindex_timefmt_calc_size (const ngx_str_t *fmt)
 #undef DATETIME_CASE
 }
 
+static ngx_str_t
+ngx_fancyindex_get_file(ngx_http_request_t *r, ngx_str_t *fname)
+{
+    ngx_file_t file;
+    ngx_file_info_t fi;
+    ssize_t size, n;
+    ngx_str_t ret = { 0, NULL };
+
+    ngx_memzero(&file, sizeof(ngx_file_t));
+    file.log = r->connection->log;
+
+    file.fd = ngx_open_file ((const char*)fname->data, NGX_FILE_RDONLY, 0, 0);
+    if (file.fd ==  NGX_INVALID_FILE) {
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: '%s' is not regular file.", fname->data);
+        return ret;
+    }
+
+    if (ngx_fd_info(file.fd, &fi) == NGX_FILE_ERROR) {
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: can't get information of local file '%s'.", fname->data);
+        ngx_close_file(file.fd);
+        return ret;
+    }
+
+    size = (ssize_t) ngx_file_size(&fi);
+    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+            "http fancyindex: '%s' -> size %d.", fname->data, size);
+    ret.data = (u_char*) ngx_calloc (size + 1, r->connection->log);
+    if (ret.data == NULL) {
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: memory allocation failed on %s", __FUNCTION__);
+        ngx_close_file(file.fd);
+        return ret;
+    }
+    n = ngx_read_file(&file, ret.data, size, 0);
+    if (n == NGX_ERROR) {
+        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                "http fancyindex: failed read of footer file '%s'.", fname->data);
+        ngx_close_file(file.fd);
+        ngx_free(ret.data);
+
+        ret.len = 0;
+        ret.data = NULL;
+
+        return ret;
+    }
+
+    ret.len = n;
+    ngx_close_file(file.fd);
+
+    return ret;
+}
 
 static u_char*
 ngx_fancyindex_timefmt (u_char *buffer, const ngx_str_t *fmt, const ngx_tm_t *tm)
@@ -268,11 +321,11 @@ static uintptr_t
  * above).
  */
 static ngx_inline ngx_buf_t*
-    make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
+    make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href, ngx_str_t local)
     ngx_force_inline;
 
 static ngx_inline ngx_buf_t*
-    make_footer_buf(ngx_http_request_t *r)
+    make_footer_buf(ngx_http_request_t *r, ngx_str_t local)
     ngx_force_inline;
 
 
@@ -510,9 +563,20 @@ ngx_fancyindex_escape_filename(u_char *dst, u_char *src, size_t size)
 
 
 static ngx_inline ngx_buf_t*
-make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
+make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href, ngx_str_t local)
 {
-    size_t blen = r->uri.len
+    size_t blen;
+    ngx_buf_t *b;
+
+    if (local.len > 0) {
+        blen = local.len;
+        if ((b = ngx_create_temp_buf(r->pool, blen)) == NULL)
+            return NULL;
+        b->last = ngx_cpymem(b->last, local.data, local.len);
+        return b;
+    }
+
+    blen = r->uri.len
         + ngx_sizeof_ssz(t01_head1)
         + ngx_sizeof_ssz(t02_head2)
         + ngx_sizeof_ssz(t03_head3)
@@ -526,9 +590,8 @@ make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
               ;
     }
 
-    ngx_buf_t *b = ngx_create_temp_buf(r->pool, blen);
-
-    if (b == NULL) goto bailout;
+    if ((b = ngx_create_temp_buf(r->pool, blen)) == NULL)
+        return NULL;
 
     b->last = ngx_cpymem_ssz(b->last, t01_head1);
 
@@ -543,26 +606,33 @@ make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
     b->last = ngx_cpymem_ssz(b->last, t03_head3);
     b->last = ngx_cpymem_ssz(b->last, t04_body1);
 
-bailout:
     return b;
 }
 
 
 
 static ngx_inline ngx_buf_t*
-make_footer_buf(ngx_http_request_t *r)
+make_footer_buf(ngx_http_request_t *r, ngx_str_t local)
 {
     /*
      * TODO: Make this buffer static (i.e. readonly and reusable from
      * one request to another.
      */
-    ngx_buf_t *b = ngx_create_temp_buf(r->pool, ngx_sizeof_ssz(t08_foot1));
+    ngx_buf_t *b;
 
-    if (b == NULL) goto bailout;
+    // ngx_str_t local :: contents of local footer file
+    if (local.len > 0) {
+        if ((b = ngx_create_temp_buf(r->pool, local.len)) == NULL)
+            return NULL;
+        b->last = ngx_cpymem(b->last, local.data, local.len);
+        return b;
+    }
+
+    if ((b = ngx_create_temp_buf(r->pool, ngx_sizeof_ssz(t08_foot1))) == NULL)
+        return NULL;
 
     b->last = ngx_cpymem_ssz(b->last, t08_foot1);
 
-bailout:
     return b;
 }
 
@@ -1053,6 +1123,8 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     ngx_http_request_t             *sr;
     ngx_str_t                      *sr_uri;
     ngx_str_t                       rel_uri;
+    ngx_str_t                       lheader = { 0, NULL };
+    ngx_str_t                       lfooter = { 0, NULL };
     ngx_int_t                       rc;
     ngx_http_fancyindex_loc_conf_t *alcf;
     ngx_chain_t                     out[3] = {
@@ -1097,6 +1169,11 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
         return rc;
 
     if (alcf->header.len > 0) {
+        /* if header is local file */
+        lheader = ngx_fancyindex_get_file(r, &(alcf->header));
+        if (lheader.len > 0)
+            goto add_builtin_header;
+
         /* URI is configured, make Nginx take care of with a subrequest. */
         sr_uri = &alcf->header;
 
@@ -1136,31 +1213,56 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     }
     else {
 add_builtin_header:
-        ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                "http fancyindex: adding built-in header");
+        if (lheader.len > 0) {
+            ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "http fancyindex: adding local filesystem header");
+        } else {
+            ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "http fancyindex: adding built-in header");
+        }
         /* Make space before */
         out[1].next = out[0].next;
         out[1].buf  = out[0].buf;
         /* Chain header buffer */
         out[0].next = &out[1];
-        out[0].buf  = make_header_buf(r, alcf->css_href);
+        out[0].buf  = make_header_buf(r, alcf->css_href, lheader);
+        if ( lheader.data != NULL ) {
+            /* lheader.len is used by the local footer and should not be initialized. */
+            ngx_free(lheader.data);
+            lheader.data = NULL;
+        }
     }
 
+add_local_footer:
     /* If footer is disabled, chain up footer buffer. */
-    if (alcf->footer.len == 0) {
-        ngx_uint_t last  = (alcf->header.len == 0) ? 2 : 1;
+    if (alcf->footer.len == 0 || lfooter.len > 0) {
+        ngx_uint_t last  = (alcf->header.len == 0 || lheader.len > 0) ? 2 : 1;
 
-        ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
-                "http fancyindex: adding built-in footer at %i", last);
+        if (lfooter.len > 0) {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "http fancyindex: adding local filesystem footer at %i", last);
+        } else {
+            ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "http fancyindex: adding built-in footer at %i", last);
+        }
 
         out[last-1].next = &out[last];
-        out[last].buf    = make_footer_buf(r);
+        out[last].buf    = make_footer_buf(r, lfooter);
+        if (lfooter.data != NULL) {
+            ngx_free(lfooter.data);
+            lfooter.len = 0;
+            lfooter.data = NULL;
+        }
 
         out[last-1].buf->last_in_chain = 0;
         out[last].buf->last_in_chain   = 1;
         out[last].buf->last_buf        = 1;
         /* Send everything with a single call :D */
         return ngx_http_output_filter(r, &out[0]);
+    } else {
+        lfooter = ngx_fancyindex_get_file(r, &(alcf->footer));
+        if (lfooter.len > 0)
+            goto add_local_footer;
     }
 
     /*
@@ -1210,7 +1312,7 @@ add_builtin_header:
          * we get something different from a 404?
          */
         out[0].next = NULL;
-        out[0].buf  = make_footer_buf(r);
+        out[0].buf  = make_footer_buf(r, lfooter);
         out[0].buf->last_in_chain = 1;
         out[0].buf->last_buf = 1;
         /* Directly send out the builtin footer */
