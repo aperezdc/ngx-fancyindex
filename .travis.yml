@@ -20,8 +20,7 @@ env:
   - NGINX=1.9.15  DYNAMIC=1
   - NGINX=1.8.1
   # Also, the oldest supported version
-  # TODO: Fails building because it won't find IOV_MAX from header.
-  #- NGINX=0.7.69
+  - NGINX=0.8.55
 
 sudo: false
 

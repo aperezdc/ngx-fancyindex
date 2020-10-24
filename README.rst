@@ -46,10 +46,8 @@ Then load the module in `/etc/nginx/nginx.conf` using::
 Other platforms
 ~~~~~~~~~~~~~~~
 
-In most other cases you will need the sources for Nginx_. Any version starting from the 0.7
-series onwards will work.  Note that the modules *might* compile with
-versions in the 0.6 series by applying ``nginx-0.6-support.patch``, but this
-is unsupported (YMMV).
+In most other cases you will need the sources for Nginx_. Any version starting
+from the 0.8 series should work.
 
 In order to use the ``fancyindex_header_`` and ``fancyindex_footer_`` directives
 you will also need the `ngx_http_addition_module <https://nginx.org/en/docs/http/ngx_http_addition_module.html>`_
