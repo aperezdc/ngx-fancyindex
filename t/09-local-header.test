@@ -1,0 +1,17 @@
+#! /bin/bash
+cat <<---
+This test checks that a local header can be included with
+"fancyindex_header ... local"
+--
+use pup
+
+cat > "${TESTDIR}/header" <<EOF
+<div id="customheader">yes</div>
+EOF
+
+nginx_start 'fancyindex_header "/header" local;'
+
+T=$(fetch / | pup -p body 'div#customheader' text{})
+[[ $T == yes ]] ||  fail 'Custom header missing'
+
+nginx_is_running || fail 'Nginx died'

@@ -1,0 +1,31 @@
+#! /bin/bash
+cat <<---
+This test checks that local footers are correctly included in presence of
+directives in nested locations:
+
+	fancyindex_footer <one> local;
+	location /sub {
+		fancyindex_footer <another> local;
+	}
+
+--
+use pup
+
+echo '<div id="topfooter">yes</div>' > "${TESTDIR}/top-footer"
+echo '<div id="subfooter">yes</div>' > "${TESTDIR}/sub-footer"
+
+nginx_start 'fancyindex_footer "/top-footer" local;
+             location /child-directory {
+			    fancyindex_footer "/sub-footer" local;
+			 }'
+
+T=$(fetch /)
+echo "$T" > "$TESTDIR/top.html"
+[[ $(pup -p body 'div#topfooter' text{} <<< "$T") = yes ]] || fail 'Custom header missing at /'
+[[ -z $(pup -p body 'div#subfooter' text{} <<< "$T") ]] || fail 'Wrong header at /'
+
+T=$(fetch /child-directory/)
+[[ $(pup -p body 'div#subfooter' text{} <<< "$T") = yes ]] || fail 'Custom header missing at /sub/'
+[[ -z $(pup -p body 'div#topfooter' text{} <<< "$T") ]] || fail 'Wrong header at /sub/'
+
+nginx_is_running || fail 'Nginx died'
