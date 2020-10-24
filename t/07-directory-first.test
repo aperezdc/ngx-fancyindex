@@ -2,6 +2,7 @@
 cat <<---
 This test check the output using "fancyindex_directories_first on"
 --
+use pup
 
 for d in "008d" "000d" "004d" ; do
 	mkdir -p "${TESTDIR}/dir_first/${d}"
