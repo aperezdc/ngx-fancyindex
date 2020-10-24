@@ -450,6 +450,8 @@ ngx_fancyindex_escape_filename(u_char *dst, u_char *src, size_t size)
         switch (*psrc++) {
             case ':':
             case '?':
+            case '[':
+            case ']':
                 escapes++;
                 break;
         }
@@ -490,6 +492,16 @@ ngx_fancyindex_escape_filename(u_char *dst, u_char *src, size_t size)
                     *dst++ = '%';
                     *dst++ = '3';
                     *dst++ = 'F';
+                    break;
+                case '[':
+                    *dst++ = '%';
+                    *dst++ = '5';
+                    *dst++ = 'B';
+                    break;
+                case ']':
+                    *dst++ = '%';
+                    *dst++ = '5';
+                    *dst++ = 'D';
                     break;
                 default:
                     *dst++ = *buf;
