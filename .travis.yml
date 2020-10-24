@@ -6,11 +6,11 @@ compiler:
 
 env:
   # Mainline.
-  - NGINX=1.15.2
-  - NGINX=1.15.2  DYNAMIC=1
+  - NGINX=1.19.3
+  - NGINX=1.19.3  DYNAMIC=1
   # Stable.
-  - NGINX=1.14.0
-  - NGINX=1.14.0  DYNAMIC=1
+  - NGINX=1.18.0
+  - NGINX=1.18.0  DYNAMIC=1
   # Other configurations.
   - NGINX=1.12.2
   - NGINX=1.12.2  DYNAMIC=1
