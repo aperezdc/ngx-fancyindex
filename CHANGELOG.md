@@ -3,6 +3,28 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2020-10-24
+### Added
+- New option `fancyindex_show_dotfiles`. (Path by Joshua Shaffer
+  <<joshua.shaffer@icmrl.net>>.)
+- The `fancyindex_header` and `fancyindex_footer` options now support local
+  files properly, by means of a `local` flag. (Patches by JoungKyun Kim
+  <<joungkyun@gmail.com>> and Adrián Pérez <<aperez@igalia.com>>.)
+
+### Changed
+- Improved performance of directory entry sorting, which should be quite
+  noticeable for directories with thousands of files. (Patch by
+  [Yuxiang Zhang](https://github.com/z4yx).)
+- The minimum Nginx version supported by the module is now 0.8.x.
+
+### Fixed
+- Properly escape square brackets in directory entry names when the module
+  is built with older versions of Nginx. (Patch by Adrián Pérez
+  <<aperez@igalia.com>>.)
+- Fix directory entry listing not being shown when using the
+  [nginx-auth-ldap](https://github.com/kvspb/nginx-auth-ldap) module. (Patch
+  by JoungKyun Kim <<joungkyun@gmail.com>>.)
+
 ## [0.4.4] - 2020-02-19
 ### Added
 - New option `fancyindex_hide_parent_dir`, which disables generating
@@ -148,7 +170,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.4...v0.5.0
 [0.4.4]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.1...v0.4.2
