@@ -1,0 +1,26 @@
+#! /bin/bash
+cat <<---
+This test checks that both a local header and footer can be included with
+"fancyindex_{header,footer} ... local"
+--
+use pup
+
+cat > "${TESTDIR}/header" <<EOF
+<div id="customheader">yes</div>
+EOF
+cat > "${TESTDIR}/footer" <<EOF
+<div id="customfooter">yes</div>
+EOF
+
+nginx_start 'fancyindex_header "/header" local;
+             fancyindex_footer "/footer" local;'
+
+P=$(fetch /)
+
+H=$(pup -p body 'div#customheader' text{} <<< "$P")
+[[ $H == yes ]] ||  fail 'Custom header missing'
+
+F=$(pup -p body 'div#customfooter' text{} <<< "$P")
+[[ $F == yes ]] || fail 'Custom footer missing'
+
+nginx_is_running || fail 'Nginx died'
