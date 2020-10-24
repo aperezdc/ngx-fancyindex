@@ -182,13 +182,15 @@ fancyindex_name_length
 
 fancyindex_footer
 ~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_footer path*
+:Syntax: *fancyindex_footer path* [*subrequest* | *local*]
 :Default: fancyindex_footer ""
 :Context: http, server, location
 :Description:
   Specifies which file should be inserted at the foot of directory listings.
   If set to an empty string, the default footer supplied by the module will
-  be sent.
+  be sent. The optional parameter indicates whether the *path* is to be
+  treated as an URI to load using a *subrequest* (the default), or whether
+  it refers to a *local* file.
 
 .. note:: Using this directive needs the ngx_http_addition_module_ built
    into Nginx.
@@ -203,13 +205,15 @@ fancyindex_footer
 
 fancyindex_header
 ~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_header path*
+:Syntax: *fancyindex_header path* [*subrequest* | *local*]
 :Default: fancyindex_header ""
 :Context: http, server, location
 :Description:
   Specifies which file should be inserted at the head of directory listings.
   If set to an empty string, the default header supplied by the module will
-  be sent.
+  be sent. The optional parameter indicates whether the *path* is to be
+  treated as an URI to load using a *subrequest* (the default), or whether
+  it refers to a *local* file.
 
 .. note:: Using this directive needs the ngx_http_addition_module_ built
    into Nginx.
