@@ -2,8 +2,8 @@
 Nginx Fancy Index module
 ========================
 
-.. image:: https://travis-ci.org/aperezdc/ngx-fancyindex.svg?branch=master
-   :target: https://travis-ci.org/aperezdc/ngx-fancyindex
+.. image:: https://travis-ci.com/aperezdc/ngx-fancyindex.svg?branch=master
+   :target: https://travis-ci.com/aperezdc/ngx-fancyindex
    :alt: Build Status
 
 .. contents::
