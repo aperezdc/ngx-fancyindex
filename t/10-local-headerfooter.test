@@ -12,8 +12,8 @@ cat > "${TESTDIR}/footer" <<EOF
 <div id="customfooter">yes</div>
 EOF
 
-nginx_start 'fancyindex_header "/header" local;
-             fancyindex_footer "/footer" local;'
+nginx_start "fancyindex_header \"${TESTDIR}/header\" local;
+             fancyindex_footer \"${TESTDIR}/footer\" local;"
 
 P=$(fetch /)
 
