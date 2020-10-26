@@ -9,7 +9,7 @@ cat > "${TESTDIR}/footer" <<EOF
 <div id="customfooter">yes</div>
 EOF
 
-nginx_start 'fancyindex_footer "/footer" local;'
+nginx_start "fancyindex_footer \"${TESTDIR}/footer\" local;"
 
 T=$(fetch / | pup -p body 'div#customfooter' text{})
 [[ $T == yes ]] ||  fail 'Custom header missing'

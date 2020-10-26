@@ -230,7 +230,7 @@ ngx_fancyindex_conf_set_headerfooter(ngx_conf_t *cf, ngx_command_t *cmd, void *c
 
     /* Kind of path. Default is "subrequest". */
     ngx_uint_t kind = NGX_HTTP_FANCYINDEX_HEADERFOOTER_SUBREQUEST;
-    if (cf->args->nelts == 2) {
+    if (cf->args->nelts == 3) {
         kind = headerfooter_kind(&values[2]);
         if (kind == NGX_CONF_UNSET_UINT) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,

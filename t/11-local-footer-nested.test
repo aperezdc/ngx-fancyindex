@@ -14,10 +14,10 @@ use pup
 echo '<div id="topfooter">yes</div>' > "${TESTDIR}/top-footer"
 echo '<div id="subfooter">yes</div>' > "${TESTDIR}/sub-footer"
 
-nginx_start 'fancyindex_footer "/top-footer" local;
+nginx_start "fancyindex_footer \"${TESTDIR}/top-footer\" local;
              location /child-directory {
-			    fancyindex_footer "/sub-footer" local;
-			 }'
+			    fancyindex_footer \"${TESTDIR}/sub-footer\" local;
+			 }"
 
 T=$(fetch /)
 echo "$T" > "$TESTDIR/top.html"

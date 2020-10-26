@@ -1,0 +1,11 @@
+#! /bin/bash
+cat <<---
+This test checks that the configuration file is properly parsed if there
+is only one parameter passed to the fancyndex_header and fancyindex_footer
+configuration directives.
+--
+
+nginx_start 'fancyindex_header "/header";
+	         fancyindex_footer "/footer";'
+
+nginx_is_running || fail 'Nginx died'
