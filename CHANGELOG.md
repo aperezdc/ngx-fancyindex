@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.1] - 2020-10-26
+### Fixed
+- Properly handle optional second argument to `fancyindex_header` and
+  `fancyindex_footer`
+  ([#117](https://github.com/aperezdc/ngx-fancyindex/issues/117)).
+
 ## [0.5.0] - 2020-10-24
 ### Added
 - New option `fancyindex_show_dotfiles`. (Path by Joshua Shaffer
@@ -170,7 +176,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.4...v0.5.0
 [0.4.4]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.2...v0.4.3
