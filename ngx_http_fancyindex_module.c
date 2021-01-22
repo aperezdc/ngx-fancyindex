@@ -152,6 +152,7 @@ typedef struct {
 typedef struct {
     ngx_flag_t enable;         /**< Module is enabled. */
     ngx_uint_t default_sort;   /**< Default sort criterion. */
+    ngx_flag_t case_sensitive; /**< Case-sensitive name sorting */
     ngx_flag_t dirs_first;     /**< Group directories together first when sorting */
     ngx_flag_t localtime;      /**< File mtime dates are sent in local time. */
     ngx_flag_t exact_size;     /**< Sizes are sent always in bytes. */
@@ -336,13 +337,17 @@ typedef struct {
 
 
 static int ngx_libc_cdecl
-    ngx_http_fancyindex_cmp_entries_name_desc(const void *one, const void *two);
+    ngx_http_fancyindex_cmp_entries_name_cs_desc(const void *one, const void *two);
+static int ngx_libc_cdecl
+    ngx_http_fancyindex_cmp_entries_name_ci_desc(const void *one, const void *two);
 static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_size_desc(const void *one, const void *two);
 static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_mtime_desc(const void *one, const void *two);
 static int ngx_libc_cdecl
-    ngx_http_fancyindex_cmp_entries_name_asc(const void *one, const void *two);
+    ngx_http_fancyindex_cmp_entries_name_cs_asc(const void *one, const void *two);
+static int ngx_libc_cdecl
+    ngx_http_fancyindex_cmp_entries_name_ci_asc(const void *one, const void *two);
 static int ngx_libc_cdecl
     ngx_http_fancyindex_cmp_entries_size_asc(const void *one, const void *two);
 static int ngx_libc_cdecl
@@ -390,6 +395,13 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, default_sort),
       &ngx_http_fancyindex_sort_criteria },
+
+    { ngx_string("fancyindex_case_sensitive"),
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      ngx_conf_set_flag_slot,
+      NGX_HTTP_LOC_CONF_OFFSET,
+      offsetof(ngx_http_fancyindex_loc_conf_t, case_sensitive),
+      NULL },
 
     { ngx_string("fancyindex_directories_first"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
@@ -950,12 +962,16 @@ make_content_buf(
             case 'N': /* Sort by name */
             default:
                 if (sort_descending) {
-                    sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_desc;
+                    sort_cmp_func = alcf->case_sensitive
+                        ? ngx_http_fancyindex_cmp_entries_name_cs_desc
+                        : ngx_http_fancyindex_cmp_entries_name_ci_desc;
                     if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC)
                         sort_url_args = "?C=N&amp;O=D";
                 }
                 else {
-                    sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_asc;
+                    sort_cmp_func = alcf->case_sensitive
+                        ? ngx_http_fancyindex_cmp_entries_name_cs_asc
+                        : ngx_http_fancyindex_cmp_entries_name_ci_asc;
                     if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME)
                         sort_url_args = "?C=N&amp;O=A";
                 }
@@ -977,11 +993,15 @@ make_content_buf(
                 sort_cmp_func = ngx_http_fancyindex_cmp_entries_size_asc;
                 break;
             case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC:
-                sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_desc;
+                sort_cmp_func = alcf->case_sensitive
+                    ? ngx_http_fancyindex_cmp_entries_name_cs_desc
+                    : ngx_http_fancyindex_cmp_entries_name_ci_desc;
                 break;
             case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME:
             default:
-                sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_asc;
+                sort_cmp_func = alcf->case_sensitive
+                    ? ngx_http_fancyindex_cmp_entries_name_cs_asc
+                    : ngx_http_fancyindex_cmp_entries_name_ci_asc;
                 break;
         }
     }
@@ -1337,12 +1357,22 @@ add_builtin_header:
 
 
 static int ngx_libc_cdecl
-ngx_http_fancyindex_cmp_entries_name_desc(const void *one, const void *two)
+ngx_http_fancyindex_cmp_entries_name_cs_desc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
     ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
 
     return (int) ngx_strcmp(second->name.data, first->name.data);
+}
+
+
+static int ngx_libc_cdecl
+ngx_http_fancyindex_cmp_entries_name_ci_desc(const void *one, const void *two)
+{
+    ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
+    ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
+
+    return (int) ngx_strcasecmp(second->name.data, first->name.data);
 }
 
 
@@ -1367,12 +1397,22 @@ ngx_http_fancyindex_cmp_entries_mtime_desc(const void *one, const void *two)
 
 
 static int ngx_libc_cdecl
-ngx_http_fancyindex_cmp_entries_name_asc(const void *one, const void *two)
+ngx_http_fancyindex_cmp_entries_name_cs_asc(const void *one, const void *two)
 {
     ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
     ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
 
     return (int) ngx_strcmp(first->name.data, second->name.data);
+}
+
+
+static int ngx_libc_cdecl
+ngx_http_fancyindex_cmp_entries_name_ci_asc(const void *one, const void *two)
+{
+    ngx_http_fancyindex_entry_t *first = (ngx_http_fancyindex_entry_t *) one;
+    ngx_http_fancyindex_entry_t *second = (ngx_http_fancyindex_entry_t *) two;
+
+    return (int) ngx_strcasecmp(first->name.data, second->name.data);
 }
 
 
@@ -1431,6 +1471,7 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
      */
     conf->enable         = NGX_CONF_UNSET;
     conf->default_sort   = NGX_CONF_UNSET_UINT;
+    conf->case_sensitive = NGX_CONF_UNSET;
     conf->dirs_first     = NGX_CONF_UNSET;
     conf->localtime      = NGX_CONF_UNSET;
     conf->exact_size     = NGX_CONF_UNSET;
@@ -1454,6 +1495,7 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 
     ngx_conf_merge_value(conf->enable, prev->enable, 0);
     ngx_conf_merge_uint_value(conf->default_sort, prev->default_sort, NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME);
+    ngx_conf_merge_value(conf->case_sensitive, prev->case_sensitive, 1);
     ngx_conf_merge_value(conf->dirs_first, prev->dirs_first, 1);
     ngx_conf_merge_value(conf->localtime, prev->localtime, 0);
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);

@@ -146,6 +146,15 @@ fancyindex_default_sort
 :Description:
   Defines sorting criterion by default.
 
+fancyindex_case_sensitive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:Syntax: *fancyindex_case_sensitive* [*on* | *off*]
+:Default: fancyindex_case_sensitive on
+:Context: http, server, location
+:Description:
+  If enabled (default setting), sorting by name will be case-sensitive.
+  If disabled, case will be ignored when sorting by name.
+
 fancyindex_directories_first
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_directories_first* [*on* | *off*]
