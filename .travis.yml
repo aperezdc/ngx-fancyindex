@@ -6,8 +6,8 @@ compiler:
 
 env:
   # Mainline.
-  - NGINX=1.19.3
-  - NGINX=1.19.3  DYNAMIC=1
+  - NGINX=1.19.7
+  - NGINX=1.19.7  DYNAMIC=1
   # Stable.
   - NGINX=1.18.0
   - NGINX=1.18.0  DYNAMIC=1
