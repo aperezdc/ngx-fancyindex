@@ -328,6 +328,7 @@ typedef struct {
     ngx_str_t      name;
     size_t         utf_len;
     ngx_uint_t     escape;
+    ngx_uint_t     escape_html;
     ngx_uint_t     dir;
     time_t         mtime;
     off_t          size;
@@ -668,7 +669,7 @@ make_content_buf(
     const char  *sort_url_args = "";
 
     off_t        length;
-    size_t       len, root, copy, allocated;
+    size_t       len, root, copy, allocated, escape_html;
     int64_t      multiplier;
     u_char      *filename, *last;
     ngx_tm_t     tm;
@@ -832,6 +833,9 @@ make_content_buf(
         entry->escape = 2 * ngx_fancyindex_escape_filename(NULL,
                                                            ngx_de_name(&dir),
                                                            len);
+        entry->escape_html = ngx_escape_html(NULL,
+                                             entry->name.data,
+                                             entry->name.len);
 
         entry->dir     = ngx_de_is_dir(&dir);
         entry->mtime   = ngx_de_mtime(&dir);
@@ -850,8 +854,11 @@ make_content_buf(
     /*
      * Calculate needed buffer length.
      */
+
+    escape_html = ngx_escape_html(NULL, r->uri.data, r->uri.len);
+
     if (alcf->show_path)
-        len = r->uri.len
+        len = r->uri.len + escape_html
           + ngx_sizeof_ssz(t05_body2)
           + ngx_sizeof_ssz(t06_list1)
           + ngx_sizeof_ssz(t_parentdir_entry)
@@ -859,7 +866,7 @@ make_content_buf(
           + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
           ;
    else
-        len = r->uri.len
+        len = r->uri.len + escape_html
           + ngx_sizeof_ssz(t06_list1)
           + ngx_sizeof_ssz(t_parentdir_entry)
           + ngx_sizeof_ssz(t07_list2)
@@ -889,9 +896,9 @@ make_content_buf(
             + entry[i].name.len + entry[i].escape /* Escaped URL */
             + ngx_sizeof_ssz("?C=x&amp;O=y") /* URL sorting arguments */
             + ngx_sizeof_ssz("\" title=\"")
-            + entry[i].name.len + entry[i].utf_len
+            + entry[i].name.len + entry[i].utf_len + entry[i].escape_html
             + ngx_sizeof_ssz("\">")
-            + entry[i].name.len + entry[i].utf_len
+            + entry[i].name.len + entry[i].utf_len + entry[i].escape_html
             + alcf->name_length + ngx_sizeof_ssz("&gt;")
             + ngx_sizeof_ssz("</a></td><td class=\"size\">")
             + 20 /* File size */
@@ -1009,7 +1016,7 @@ make_content_buf(
             }
             if (r->dir)
                 r++;
-            
+
             if (r > entry)
                 /* Sort directories */
                 ngx_qsort(entry, (size_t)(r - entry),
@@ -1026,7 +1033,7 @@ make_content_buf(
 
     /* Display the path, if needed */
     if (alcf->show_path){
-        b->last = ngx_cpymem_str(b->last, r->uri);
+        b->last = last = (u_char *) ngx_escape_html(b->last, r->uri.data, r->uri.len);
         b->last = ngx_cpymem_ssz(b->last, t05_body2);
     }
 
@@ -1079,26 +1086,32 @@ make_content_buf(
 
         *b->last++ = '"';
         b->last = ngx_cpymem_ssz(b->last, " title=\"");
-        b->last = ngx_cpymem_str(b->last, entry[i].name);
+        b->last = (u_char *) ngx_escape_html(b->last, entry[i].name.data, entry[i].name.len);
         *b->last++ = '"';
         *b->last++ = '>';
 
         len = entry[i].utf_len;
 
-        if (entry[i].name.len - len) {
+        if (entry[i].name.len != len) {
             if (len > alcf->name_length) {
                 copy = alcf->name_length - 3 + 1;
             } else {
                 copy = alcf->name_length + 1;
             }
 
+            last = b->last;
             b->last = ngx_utf8_cpystrn(b->last, entry[i].name.data,
-                                          copy, entry[i].name.len);
+                copy, entry[i].name.len);
+
+            b->last = (u_char *) ngx_escape_html(last, entry[i].name.data, b->last - last);
             last = b->last;
 
         } else {
-            b->last = ngx_cpystrn(b->last, entry[i].name.data,
-                                  alcf->name_length + 1);
+            if (len > alcf->name_length) {
+                b->last = (u_char *) ngx_escape_html(b->last, entry[i].name.data, alcf->name_length + 1);
+            } else {
+                b->last = (u_char *) ngx_escape_html(b->last, entry[i].name.data, entry[i].name.len);
+            }
             last = b->last - 3;
         }
 
@@ -1135,7 +1148,7 @@ make_content_buf(
                 if (j == DIM(sizes) - 1)
                     b->last = ngx_sprintf(b->last, "%O %s", length, sizes[j]);
                 else
-                    b->last = ngx_sprintf(b->last, "%.1f %s", 
+                    b->last = ngx_sprintf(b->last, "%.1f %s",
                                           (float) length / multiplier, sizes[j]);
             }
         }
