@@ -1,0 +1,40 @@
+---
+name: Build
+on: [pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        dynamic: [0, 1]
+        nginx:
+          # Mainline
+          - 1.21.3
+          # Stable.
+          - 1.20.1
+          # First version with loadable module support.
+          - 1.9.15
+          # Oldest supported version.
+          - 0.8.55
+        exclude:
+          - nginx: 0.8.55
+            dynamic: 1
+    runs-on: ubuntu-18.04
+    env:
+      CFLAGS: "-Wno-error"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Packages
+        run: |
+          sudo apt update
+          sudo apt install -y libpcre3-dev libssl-dev
+          t/get-pup || echo 'Tests needing pup will be skipped'
+      - name: Test
+        env:
+          CC: ${{ matrix.compiler }}
+        run: |
+          CC=${{ matrix.compiler }}
+          t/build-and-run ${{ matrix.nginx }} ${{ matrix.dynamic }}
