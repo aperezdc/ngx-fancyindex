@@ -20,7 +20,7 @@ function nginx_conf_generate () {
 		keepalive_timeout 65;
 		server {
 			server_name localhost;
-			listen 127.0.0.1:8888;
+			listen 127.0.0.1:${NGINX_PORT};
 			root ${TESTDIR};
 			error_page 500 502 503 504 /50x.html;
 			location = /50x.html { root html; }
@@ -36,6 +36,11 @@ function nginx_conf_generate () {
 
 readonly NGINX_CONF="${PREFIX}/conf/nginx.conf"
 readonly NGINX_PID="${PREFIX}/logs/nginx.pid"
+
+NGINX_PORT=$(ss -4Htnl | awk '{ sub("[^:]+:", "", $4) ; seen[$4]=1 }
+END { p=1025 ; while (seen[p]) p++; print p}')
+readonly NGINX_PORT
+
 rm -f "${NGINX_CONF}" "${NGINX_PID}"
 mkdir -p "${PREFIX}/logs"
 
@@ -85,7 +90,7 @@ function fetch () {
 		opts+=( -S )
 		shift
 	fi
-	wget "${opts[@]}" -O- "http://localhost:8888${1:-/}" 2>&1
+	wget "${opts[@]}" -O- "http://localhost:${NGINX_PORT}${1:-/}" 2>&1
 }
 
 function skip () {
