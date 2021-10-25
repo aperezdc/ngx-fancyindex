@@ -155,7 +155,6 @@ typedef struct {
     ngx_flag_t dirs_first;     /**< Group directories together first when sorting */
     ngx_flag_t localtime;      /**< File mtime dates are sent in local time. */
     ngx_flag_t exact_size;     /**< Sizes are sent always in bytes. */
-    ngx_uint_t name_length;    /**< Maximum length of file names in bytes. */
     ngx_flag_t hide_symlinks;  /**< Hide symbolic links in listings. */
     ngx_flag_t show_path;      /**< Whether to display or not the path + '</h1>' after the header */
     ngx_flag_t hide_parent;    /**< Hide parent directory. */
@@ -413,13 +412,6 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       offsetof(ngx_http_fancyindex_loc_conf_t, exact_size),
       NULL },
 
-    { ngx_string("fancyindex_name_length"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
-      ngx_conf_set_num_slot,
-      NGX_HTTP_LOC_CONF_OFFSET,
-      offsetof(ngx_http_fancyindex_loc_conf_t, name_length),
-      NULL },
-
     { ngx_string("fancyindex_header"),
       NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE12,
       ngx_fancyindex_conf_set_headerfooter,
@@ -669,7 +661,7 @@ make_content_buf(
     const char  *sort_url_args = "";
 
     off_t        length;
-    size_t       len, root, copy, allocated, escape_html;
+    size_t       len, root, allocated, escape_html;
     int64_t      multiplier;
     u_char      *filename, *last;
     ngx_tm_t     tm;
@@ -892,14 +884,13 @@ make_content_buf(
          *     <td>size</td><td>date</td>
          *   </tr>
          */
-        len += ngx_sizeof_ssz("<tr><td class=\"link\"><a href=\"")
+        len += ngx_sizeof_ssz("<tr><td colspan=\"2\" class=\"link\"><a href=\"")
             + entry[i].name.len + entry[i].escape /* Escaped URL */
             + ngx_sizeof_ssz("?C=x&amp;O=y") /* URL sorting arguments */
             + ngx_sizeof_ssz("\" title=\"")
             + entry[i].name.len + entry[i].utf_len + entry[i].escape_html
             + ngx_sizeof_ssz("\">")
             + entry[i].name.len + entry[i].utf_len + entry[i].escape_html
-            + alcf->name_length + ngx_sizeof_ssz("&gt;")
             + ngx_sizeof_ssz("</a></td><td class=\"size\">")
             + 20 /* File size */
             + ngx_sizeof_ssz("</td><td class=\"date\">")    /* Date prefix */
@@ -1046,7 +1037,7 @@ make_content_buf(
     if (r->uri.len > 1 && alcf->hide_parent == 0) {
         b->last = ngx_cpymem_ssz(b->last,
                                  "<tr>"
-                                 "<td class=\"link\"><a href=\"../");
+                                 "<td colspan=\"2\" class=\"link\"><a href=\"../");
         if (*sort_url_args) {
             b->last = ngx_cpymem(b->last,
                                  sort_url_args,
@@ -1062,7 +1053,7 @@ make_content_buf(
 
     /* Entries for directories and files */
     for (i = 0; i < entries.nelts; i++) {
-        b->last = ngx_cpymem_ssz(b->last, "<tr><td class=\"link\"><a href=\"");
+        b->last = ngx_cpymem_ssz(b->last, "<tr><td colspan=\"2\" class=\"link\"><a href=\"");
 
         if (entry[i].escape) {
             ngx_fancyindex_escape_filename(b->last,
@@ -1092,40 +1083,15 @@ make_content_buf(
 
         len = entry[i].utf_len;
 
-        if (entry[i].name.len != len) {
-            if (len > alcf->name_length) {
-                copy = alcf->name_length - 3 + 1;
-            } else {
-                copy = alcf->name_length + 1;
-            }
+        b->last = (u_char *) ngx_escape_html(b->last, entry[i].name.data, entry[i].name.len);
+        last = b->last - 3;
 
-            last = b->last;
-            b->last = ngx_utf8_cpystrn(b->last, entry[i].name.data,
-                copy, entry[i].name.len);
-
-            b->last = (u_char *) ngx_escape_html(last, entry[i].name.data, b->last - last);
-            last = b->last;
-
-        } else {
-            if (len > alcf->name_length) {
-                b->last = (u_char *) ngx_escape_html(b->last, entry[i].name.data, alcf->name_length + 1);
-            } else {
-                b->last = (u_char *) ngx_escape_html(b->last, entry[i].name.data, entry[i].name.len);
-            }
-            last = b->last - 3;
+        if (entry[i].dir) {
+            *b->last++ = '/';
+            len++;
         }
 
-        if (len > alcf->name_length) {
-            b->last = ngx_cpymem_ssz(last, "..&gt;</a></td><td class=\"size\">");
-
-        } else {
-            if (entry[i].dir && alcf->name_length - len > 0) {
-                *b->last++ = '/';
-                len++;
-            }
-
-            b->last = ngx_cpymem_ssz(b->last, "</a></td><td class=\"size\">");
-        }
+        b->last = ngx_cpymem_ssz(b->last, "</a></td><td class=\"size\">");
 
         if (alcf->exact_size) {
             if (entry[i].dir) {
@@ -1464,7 +1430,6 @@ ngx_http_fancyindex_create_loc_conf(ngx_conf_t *cf)
     conf->default_sort   = NGX_CONF_UNSET_UINT;
     conf->dirs_first     = NGX_CONF_UNSET;
     conf->localtime      = NGX_CONF_UNSET;
-    conf->name_length    = NGX_CONF_UNSET_UINT;
     conf->exact_size     = NGX_CONF_UNSET;
     conf->ignore         = NGX_CONF_UNSET_PTR;
     conf->hide_symlinks  = NGX_CONF_UNSET;
@@ -1491,7 +1456,6 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->exact_size, prev->exact_size, 1);
     ngx_conf_merge_value(conf->show_path, prev->show_path, 1);
     ngx_conf_merge_value(conf->show_dot_files, prev->show_dot_files, 0);
-    ngx_conf_merge_uint_value(conf->name_length, prev->name_length, 50);
 
     ngx_conf_merge_str_value(conf->header.path, prev->header.path, "");
     ngx_conf_merge_str_value(conf->header.path, prev->header.local, "");

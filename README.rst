@@ -172,14 +172,6 @@ fancyindex_exact_size
   accurately, or rounding off to the kilobyte, the megabyte and the
   gigabyte.
 
-fancyindex_name_length
-~~~~~~~~~~~~~~~~~~~~~~
-:Syntax: *fancyindex_name_length length*
-:Default: fancyindex_name_length 50
-:Context: http, server, location
-:Description:
-  Defines the maximum file name length limit in bytes.
-
 fancyindex_footer
 ~~~~~~~~~~~~~~~~~
 :Syntax: *fancyindex_footer path* [*subrequest* | *local*]
