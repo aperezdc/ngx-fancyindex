@@ -3,6 +3,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.2] - 2021-10-28
+### Fixed
+- Properly escape file names to ensure that file names are never renreded
+  as HTML. (Patch by Anthony Ryan <<anthonyryan1@gmail.com>>,
+  [#128](https://github.com/aperezdc/ngx-fancyindex/pull/128).)
+
 ## [0.5.1] - 2020-10-26
 ### Fixed
 - Properly handle optional second argument to `fancyindex_header` and
@@ -176,7 +182,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.4...v0.5.0
 [0.4.4]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.3...v0.4.4
