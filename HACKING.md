@@ -26,4 +26,5 @@ install it and use `gawk` instead in the command line above.
 This includes macOS where the current built-in `awk` (currently version
 20070501 at time of testing on 10.13.6) doesn't apply correctly and causes
 characters to be omitted from the output. `gawk` can be installed with a 
-package manager such as [Homebrew](https://brew.sh).
+package manager such as [Homebrew](https://brew.sh) or
+[MacPorts](https://ports.macports.org/port/gawk).
