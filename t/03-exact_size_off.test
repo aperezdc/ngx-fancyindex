@@ -1,6 +1,7 @@
 #! /bin/bash
 cat <<---
-We test if the output from using "fancyindex_exact_size off" looks sane
+This test checks if the output from using "fancyindex_exact_size off"
+looks sane.
 --
 nginx_start 'fancyindex_exact_size off;'
 content=$(fetch)

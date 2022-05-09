@@ -1,8 +1,8 @@
 #! /bin/bash
 cat <<---
 This test fetches the root directory served by Nginx, which has no index
-file, and checks the output contains a few HTML elements know to exist in
-a directory index.
+file, and checks that the output contains a few HTML elements known to
+exist in a directory index.
 --
 use pup
 nginx_start
