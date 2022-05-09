@@ -66,7 +66,7 @@ done <<< "${SHASUMS}"
 
 wget -cO "${TDIR}/${ZIPFILE}" "${BASEURL}/${ZIPFILE}"
 
-read -r GOT_SHA _ < <( sha256sum "${TDIR}/${ZIPFILE}" )
+read -r _ GOT_SHA < <( openssl sha256 < "${TDIR}/${ZIPFILE}" )
 if [[ ${EXPECT_SHA} = ${GOT_SHA} ]] ; then
 	echo "Checksum for ${ZIPFILE} verified :-)"
 else
