@@ -1,6 +1,6 @@
 #! /bin/bash
 cat <<---
-This test checks that local footers are correctly included in presence of
+This test checks that local footers are correctly included in the presence of
 directives in nested locations:
 
 	fancyindex_footer <one> local;

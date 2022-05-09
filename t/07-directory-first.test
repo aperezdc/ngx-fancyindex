@@ -1,6 +1,6 @@
 #! /bin/bash
 cat <<---
-This test check the output using "fancyindex_directories_first on"
+This test checks the output using "fancyindex_directories_first on".
 --
 use pup
 
@@ -23,7 +23,7 @@ while read -r name ; do
 		;;
 	*d*)
 		echo "dir $name"
-		[[ "$cur_type" = f ]] && fail 'Directories should come before Files'
+		[[ "$cur_type" = f ]] && fail 'Directories should come before files'
 		cur_type=d
 		if [[ -z ${previous} ]] ; then
 			previous=${name}
@@ -34,7 +34,7 @@ while read -r name ; do
 		;;
 	*f*)
 		echo "file $name"
-		[[ -z "$cur_type" ]] && fail 'Directories should come before Files'
+		[[ -z "$cur_type" ]] && fail 'Directories should come before files'
 		if [[ "$cur_type" = d ]] ; then
 			cur_type=f
 			previous=${name}

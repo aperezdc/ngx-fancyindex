@@ -1,6 +1,6 @@
 #! /bin/bash
 cat <<---
-This test check the output using "fancyindex_hide_parent_dir on"
+This test checks the output using "fancyindex_hide_parent_dir on".
 --
 use pup
 nginx_start 'fancyindex_hide_parent_dir on;'
