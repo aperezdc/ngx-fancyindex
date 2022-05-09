@@ -37,8 +37,16 @@ function nginx_conf_generate () {
 readonly NGINX_CONF="${PREFIX}/conf/nginx.conf"
 readonly NGINX_PID="${PREFIX}/logs/nginx.pid"
 
-NGINX_PORT=$(ss -4Htnl | awk '{ sub("[^:]+:", "", $4) ; seen[$4]=1 }
-END { p=1025 ; while (seen[p]) p++; print p}')
+case $(uname -s) in
+	Darwin)
+		NGINX_PORT=$(netstat -a -n -finet -ptcp | awk '/LISTEN/ { sub(".+\\.", "", $4) ; seen[$4]=1 }
+			END { p=1025 ; while (seen[p]) p++; print p}')
+		;;
+	*)
+		NGINX_PORT=$(ss -4Htnl | awk '{ sub("[^:]+:", "", $4) ; seen[$4]=1 }
+			END { p=1025 ; while (seen[p]) p++; print p}')
+		;;
+esac
 readonly NGINX_PORT
 
 rm -f "${NGINX_CONF}" "${NGINX_PID}"
