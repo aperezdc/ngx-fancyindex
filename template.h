@@ -65,9 +65,26 @@ static const u_char t_list_begin[] = ""
 "<table id=\"list\">"
 "<thead>"
 "<tr>"
-"<th colspan=\"2\"><a href=\"?C=N&amp;O=A\">File Name</a>&nbsp;<a href=\"?C=N&amp;O=D\">&nbsp;&darr;&nbsp;</a></th>"
-"<th><a href=\"?C=S&amp;O=A\">File Size</a>&nbsp;<a href=\"?C=S&amp;O=D\">&nbsp;&darr;&nbsp;</a></th>"
-"<th><a href=\"?C=M&amp;O=A\">Date</a>&nbsp;<a href=\"?C=M&amp;O=D\">&nbsp;&darr;&nbsp;</a></th>"
+;
+static const u_char t_list_colhead_name1[] = ""
+"<th colspan=\"2\""
+;
+static const u_char t_list_colhead_name2[] = ""
+"><a href=\"?C=N&amp;O=A\">File Name</a>&nbsp;<a href=\"?C=N&amp;O=D\">&nbsp;&darr;&nbsp;</a></th>"
+;
+static const u_char t_list_colhead_size1[] = ""
+"<th"
+;
+static const u_char t_list_colhead_size2[] = ""
+"><a href=\"?C=S&amp;O=A\">File Size</a>&nbsp;<a href=\"?C=S&amp;O=D\">&nbsp;&darr;&nbsp;</a></th>"
+;
+static const u_char t_list_colhead_date1[] = ""
+"<th"
+;
+static const u_char t_list_colhead_date2[] = ""
+"><a href=\"?C=M&amp;O=A\">Date</a>&nbsp;<a href=\"?C=M&amp;O=D\">&nbsp;&darr;&nbsp;</a></th>"
+;
+static const u_char t_list_mid[] = ""
 "</tr>"
 "</thead>"
 "\n"
@@ -96,6 +113,13 @@ static const u_char t_foot[] = ""
 	+ nfi_sizeof_ssz(t_body1) \
 	+ nfi_sizeof_ssz(t_body2) \
 	+ nfi_sizeof_ssz(t_list_begin) \
+	+ nfi_sizeof_ssz(t_list_colhead_name1) \
+	+ nfi_sizeof_ssz(t_list_colhead_name2) \
+	+ nfi_sizeof_ssz(t_list_colhead_size1) \
+	+ nfi_sizeof_ssz(t_list_colhead_size2) \
+	+ nfi_sizeof_ssz(t_list_colhead_date1) \
+	+ nfi_sizeof_ssz(t_list_colhead_date2) \
+	+ nfi_sizeof_ssz(t_list_mid) \
 	+ nfi_sizeof_ssz(t_parentdir_entry) \
 	+ nfi_sizeof_ssz(t_list_end) \
 	+ nfi_sizeof_ssz(t_foot) \
