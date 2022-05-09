@@ -617,10 +617,10 @@ make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
 {
     ngx_buf_t *b;
     size_t blen = r->uri.len
-        + ngx_sizeof_ssz(t01_head1)
-        + ngx_sizeof_ssz(t02_head2)
-        + ngx_sizeof_ssz(t03_head3)
-        + ngx_sizeof_ssz(t04_body1)
+        + ngx_sizeof_ssz(t_head1)
+        + ngx_sizeof_ssz(t_head2)
+        + ngx_sizeof_ssz(t_head3)
+        + ngx_sizeof_ssz(t_body1)
         ;
 
     if (css_href.len) {
@@ -633,7 +633,7 @@ make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
     if ((b = ngx_create_temp_buf(r->pool, blen)) == NULL)
         return NULL;
 
-    b->last = ngx_cpymem_ssz(b->last, t01_head1);
+    b->last = ngx_cpymem_ssz(b->last, t_head1);
 
     if (css_href.len) {
         b->last = ngx_cpymem_str(b->last, css_href_pre);
@@ -641,10 +641,10 @@ make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
         b->last = ngx_cpymem_str(b->last, css_href_post);
     }
 
-    b->last = ngx_cpymem_ssz(b->last, t02_head2);
+    b->last = ngx_cpymem_ssz(b->last, t_head2);
     b->last = ngx_cpymem_str(b->last, r->uri);
-    b->last = ngx_cpymem_ssz(b->last, t03_head3);
-    b->last = ngx_cpymem_ssz(b->last, t04_body1);
+    b->last = ngx_cpymem_ssz(b->last, t_head3);
+    b->last = ngx_cpymem_ssz(b->last, t_body1);
 
     return b;
 }
@@ -851,17 +851,17 @@ make_content_buf(
 
     if (alcf->show_path)
         len = r->uri.len + escape_html
-          + ngx_sizeof_ssz(t05_body2)
-          + ngx_sizeof_ssz(t06_list1)
+          + ngx_sizeof_ssz(t_body2)
+          + ngx_sizeof_ssz(t_list_begin)
           + ngx_sizeof_ssz(t_parentdir_entry)
-          + ngx_sizeof_ssz(t07_list2)
+          + ngx_sizeof_ssz(t_list_end)
           + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
           ;
    else
         len = r->uri.len + escape_html
-          + ngx_sizeof_ssz(t06_list1)
+          + ngx_sizeof_ssz(t_list_begin)
           + ngx_sizeof_ssz(t_parentdir_entry)
-          + ngx_sizeof_ssz(t07_list2)
+          + ngx_sizeof_ssz(t_list_end)
           + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
           ;
 
@@ -1025,11 +1025,11 @@ make_content_buf(
     /* Display the path, if needed */
     if (alcf->show_path){
         b->last = last = (u_char *) ngx_escape_html(b->last, r->uri.data, r->uri.len);
-        b->last = ngx_cpymem_ssz(b->last, t05_body2);
+        b->last = ngx_cpymem_ssz(b->last, t_body2);
     }
 
     /* Open the <table> tag */
-    b->last = ngx_cpymem_ssz(b->last, t06_list1);
+    b->last = ngx_cpymem_ssz(b->last, t_list_begin);
 
     tp = ngx_timeofday();
 
@@ -1129,7 +1129,7 @@ make_content_buf(
     }
 
     /* Output table bottom */
-    b->last = ngx_cpymem_ssz(b->last, t07_list2);
+    b->last = ngx_cpymem_ssz(b->last, t_list_end);
 
     *pb = b;
     return NGX_OK;
@@ -1259,8 +1259,8 @@ add_builtin_header:
             out[last].buf->pos = alcf->footer.local.data;
             out[last].buf->last = alcf->footer.local.data + alcf->footer.local.len;
         } else {
-            out[last].buf->pos = (u_char*) t08_foot1;
-            out[last].buf->last = (u_char*) t08_foot1 + sizeof(t08_foot1) - 1;
+            out[last].buf->pos = (u_char*) t_foot;
+            out[last].buf->last = (u_char*) t_foot + sizeof(t_foot) - 1;
         }
 
         out[last-1].buf->last_in_chain = 0;
@@ -1321,8 +1321,8 @@ add_builtin_header:
         if (out[0].buf == NULL)
             return NGX_ERROR;
         out[0].buf->memory = 1;
-        out[0].buf->pos = (u_char*) t08_foot1;
-        out[0].buf->last = (u_char*) t08_foot1 + sizeof(t08_foot1) - 1;
+        out[0].buf->pos = (u_char*) t_foot;
+        out[0].buf->last = (u_char*) t_foot + sizeof(t_foot) - 1;
         out[0].buf->last_in_chain = 1;
         out[0].buf->last_buf = 1;
         /* Directly send out the builtin footer */

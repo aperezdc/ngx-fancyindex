@@ -1,5 +1,5 @@
 /* Automagically generated, do not edit! */
-static const u_char t01_head1[] = ""
+static const u_char t_head1[] = ""
 "<!DOCTYPE html>"
 "<html>"
 "<head>"
@@ -44,24 +44,24 @@ static const u_char t01_head1[] = ""
 "</style>"
 "\n"
 ;
-static const u_char t02_head2[] = ""
+static const u_char t_head2[] = ""
 "\n"
 "<title>Index of "
 ;
-static const u_char t03_head3[] = ""
+static const u_char t_head3[] = ""
 "</title>"
 "\n"
 "</head>"
 ;
-static const u_char t04_body1[] = ""
+static const u_char t_body1[] = ""
 "<body>"
 "<h1>Index of "
 ;
-static const u_char t05_body2[] = ""
+static const u_char t_body2[] = ""
 "</h1>"
 "\n"
 ;
-static const u_char t06_list1[] = ""
+static const u_char t_list_begin[] = ""
 "<table id=\"list\">"
 "<thead>"
 "<tr>"
@@ -81,22 +81,22 @@ static const u_char t_parentdir_entry[] = ""
 "</tr>"
 "\n"
 ;
-static const u_char t07_list2[] = ""
+static const u_char t_list_end[] = ""
 "</tbody>"
 "</table>"
 ;
-static const u_char t08_foot1[] = ""
+static const u_char t_foot[] = ""
 "</body>"
 "</html>"
 ;
 #define NFI_TEMPLATE_SIZE (0 \
-	+ nfi_sizeof_ssz(t01_head1) \
-	+ nfi_sizeof_ssz(t02_head2) \
-	+ nfi_sizeof_ssz(t03_head3) \
-	+ nfi_sizeof_ssz(t04_body1) \
-	+ nfi_sizeof_ssz(t05_body2) \
-	+ nfi_sizeof_ssz(t06_list1) \
+	+ nfi_sizeof_ssz(t_head1) \
+	+ nfi_sizeof_ssz(t_head2) \
+	+ nfi_sizeof_ssz(t_head3) \
+	+ nfi_sizeof_ssz(t_body1) \
+	+ nfi_sizeof_ssz(t_body2) \
+	+ nfi_sizeof_ssz(t_list_begin) \
 	+ nfi_sizeof_ssz(t_parentdir_entry) \
-	+ nfi_sizeof_ssz(t07_list2) \
-	+ nfi_sizeof_ssz(t08_foot1) \
+	+ nfi_sizeof_ssz(t_list_end) \
+	+ nfi_sizeof_ssz(t_foot) \
 	)
