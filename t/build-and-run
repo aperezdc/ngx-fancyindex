@@ -12,6 +12,15 @@ if [[ $2 -eq 1 ]] ; then
 	readonly DYNAMIC=$2
 fi
 
+case $(uname -s) in
+	Darwin)
+		JOBS=$(sysctl -n hw.activecpu)
+		;;
+	*)
+		JOBS=1
+		;;
+esac
+
 cd "$(dirname "$0")/.."
 wget -O - http://nginx.org/download/nginx-${NGINX}.tar.gz | tar -xzf -
 rm -rf prefix/
@@ -20,6 +29,7 @@ cd nginx-${NGINX}
 	--add-${DYNAMIC:+dynamic-}module=.. \
 	--with-http_addition_module \
 	--prefix="$(pwd)/../prefix"
+make -j"$JOBS"
 make install
 cd ..
 exec ./t/run prefix ${DYNAMIC}
