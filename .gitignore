@@ -1,4 +1,5 @@
 *.sw[op]
+/nginx-*
 /t/*.sh
 /t/*.out
 /t/*.err
