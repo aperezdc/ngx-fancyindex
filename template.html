@@ -40,6 +40,21 @@
 				text-overflow: '>';
 				overflow: hidden;
 			}
+			.sort-col-1 th:nth-of-type(1),
+			.sort-col-2 th:nth-of-type(2),
+			.sort-col-3 th:nth-of-type(3) {
+				background:#ddd;
+			}
+			.sort-col-1 td:nth-of-type(1),
+			.sort-col-2 td:nth-of-type(2),
+			.sort-col-3 td:nth-of-type(3) {
+				background:#eee;
+			}
+			.sort-col-1 tr:nth-child(even) td:nth-of-type(1),
+			.sort-col-2 tr:nth-child(even) td:nth-of-type(2),
+			.sort-col-3 tr:nth-child(even) td:nth-of-type(3) {
+				background:#e4e4e4;
+			}
 		</style>
 
 <!-- var t_head2 -->
@@ -60,7 +75,11 @@
 		</h1>
 
 <!-- var t_list_begin -->
-		<table id="list">
+		<table id="list" class="
+<!-- var NONE -->
+asc sort-col-1
+<!-- var t_list_head -->
+">
 			<thead>
 				<tr>
 <!-- var t_list_colhead_name1 -->

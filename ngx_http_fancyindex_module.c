@@ -853,6 +853,8 @@ make_content_buf(
         len = r->uri.len + escape_html
           + ngx_sizeof_ssz(t_body2)
           + ngx_sizeof_ssz(t_list_begin)
+          + ngx_sizeof_ssz(t_list_head)
+          + ngx_sizeof_ssz("desc sort-col-1")
           + ngx_sizeof_ssz(t_list_colhead_name1)
           + ngx_sizeof_ssz(t_list_colhead_name2)
           + ngx_sizeof_ssz(t_list_colhead_size1)
@@ -868,6 +870,8 @@ make_content_buf(
    else
         len = r->uri.len + escape_html
           + ngx_sizeof_ssz(t_list_begin)
+          + ngx_sizeof_ssz(t_list_head)
+          + ngx_sizeof_ssz("desc sort-col-1")
           + ngx_sizeof_ssz(t_list_colhead_name1)
           + ngx_sizeof_ssz(t_list_colhead_name2)
           + ngx_sizeof_ssz(t_list_colhead_size1)
@@ -1053,6 +1057,27 @@ make_content_buf(
 
     /* Open the <table> tag */
     b->last = ngx_cpymem_ssz(b->last, t_list_begin);
+    switch (sort_criterion) {
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC:
+            b->last = ngx_cpymem_ssz(b->last, "desc sort-col-1");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME:
+            b->last = ngx_cpymem_ssz(b->last, "asc sort-col-1");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC:
+            b->last = ngx_cpymem_ssz(b->last, "desc sort-col-2");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE:
+            b->last = ngx_cpymem_ssz(b->last, "asc sort-col-2");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC:
+            b->last = ngx_cpymem_ssz(b->last, "desc sort-col-3");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE:
+            b->last = ngx_cpymem_ssz(b->last, "asc sort-col-3");
+            break;
+    }
+    b->last = ngx_cpymem_ssz(b->last, t_list_head);
 
     /* Write the column headers */
     b->last = ngx_cpymem_ssz(b->last, t_list_colhead_name1);

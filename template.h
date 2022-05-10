@@ -41,6 +41,21 @@ static const u_char t_head1[] = ""
 "text-overflow: '>';"
 "overflow: hidden;"
 "}"
+".sort-col-1 th:nth-of-type(1),"
+".sort-col-2 th:nth-of-type(2),"
+".sort-col-3 th:nth-of-type(3) {"
+"background:#ddd;"
+"}"
+".sort-col-1 td:nth-of-type(1),"
+".sort-col-2 td:nth-of-type(2),"
+".sort-col-3 td:nth-of-type(3) {"
+"background:#eee;"
+"}"
+".sort-col-1 tr:nth-child(even) td:nth-of-type(1),"
+".sort-col-2 tr:nth-child(even) td:nth-of-type(2),"
+".sort-col-3 tr:nth-child(even) td:nth-of-type(3) {"
+"background:#e4e4e4;"
+"}"
 "</style>"
 "\n"
 ;
@@ -62,7 +77,10 @@ static const u_char t_body2[] = ""
 "\n"
 ;
 static const u_char t_list_begin[] = ""
-"<table id=\"list\">"
+"<table id=\"list\" class=\""
+;
+static const u_char t_list_head[] = ""
+"\">"
 "<thead>"
 "<tr>"
 ;
@@ -113,6 +131,7 @@ static const u_char t_foot[] = ""
 	+ nfi_sizeof_ssz(t_body1) \
 	+ nfi_sizeof_ssz(t_body2) \
 	+ nfi_sizeof_ssz(t_list_begin) \
+	+ nfi_sizeof_ssz(t_list_head) \
 	+ nfi_sizeof_ssz(t_list_colhead_name1) \
 	+ nfi_sizeof_ssz(t_list_colhead_name2) \
 	+ nfi_sizeof_ssz(t_list_colhead_size1) \
