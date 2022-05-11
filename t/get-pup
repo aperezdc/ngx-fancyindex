@@ -1,8 +1,8 @@
 #! /bin/bash
 set -e
 
-declare -r VERSION='0.4.0'
 declare -r SHASUMS='\
+ec9522193516ad49c78d40a8163f1d92e98866892a11aadb7be584a975026a8a  pup_69c02e189c2aaed331061ee436c39e72b830ef32_darwin_amd64.xz
 75c27caa0008a9cc639beb7506077ad9f32facbffcc4e815e999eaf9588a527e  pup_v0.4.0_darwin_386.zip
 c539a697efee2f8e56614a54cb3b215338e00de1f6a7c2fa93144ab6e1db8ebe  pup_v0.4.0_darwin_amd64.zip
 259eee82c7d7d766f1b8f93a382be21dcfefebc855a9ce8124fd78717f9df439  pup_v0.4.0_dragonfly_amd64.zip
@@ -33,49 +33,73 @@ e965c6f04b897240d84c60e2c18226deb231a657c5583680f58a61051ff5a100  pup_v0.4.0_ope
 6755cbd43e94eaf173689e93e914c7056a2249c2977e5b90024fb397f9b45ba4  pup_v0.4.0_windows_amd64.zip
 '
 
-declare -r BASEURL="https://github.com/ericchiang/pup/releases/download/v${VERSION}"
 declare -r TDIR=$(dirname "$0")
-ARCH=''
-OS=''
 
 case $(uname -m) in
 	x86_64 | amd64 ) ARCH=amd64 ;;
 	i[3456]86 ) ARCH=386 ;;
+	* ) ARCH= ;;
 esac
 
 OS=$(uname -s | tr 'A-Z' 'a-z')
 case ${OS} in
 	linux | freebsd | openbsd | netbsd | darwin ) ;;
-	* ) OS=''
+	* ) OS= ;;
 esac
+
+# The binary of pup 0.4.0 for macOS provided by the original project
+# crashes immediately on macOS 10.13 (Darwin 17) and up so use a fork:
+# https://github.com/ericchiang/pup/issues/85
+if [[ ${OS} = darwin && $(uname -r | cut -d. -f1) -ge 17 ]] ; then
+	USE_FORK=1
+else
+	USE_FORK=0
+fi
+
+if (( USE_FORK )) ; then
+	declare -r VERSION=69c02e189c2aaed331061ee436c39e72b830ef32
+	declare -r DISTFILE="pup_${VERSION}_${OS}_${ARCH}.xz"
+	declare -r URL="https://github.com/frioux/pup/releases/download/untagged-${VERSION}/pup.mac.xz"
+	if ! command -v xz >/dev/null ; then
+		echo "xz not found" 1>&2
+		exit 3
+	fi
+else
+	declare -r VERSION=0.4.0
+	declare -r DISTFILE="pup_v${VERSION}_${OS}_${ARCH}.zip"
+	declare -r URL="https://github.com/ericchiang/pup/releases/download/v${VERSION}/${DISTFILE}"
+fi
 
 if [[ -z ${ARCH} || -z ${OS} ]] ; then
 	echo "pup ${VERSION} is not available for $(uname -s) on $(uname -m)" 1>&2
 	exit 1
 fi
 
-declare -r ZIPFILE="pup_v${VERSION}_${OS}_${ARCH}.zip"
-EXPECT_SHA=''
-
+EXPECT_SHA=
 while read sum fname ; do
-	if [[ ${fname} = ${ZIPFILE} ]] ; then
+	if [[ ${fname} = ${DISTFILE} ]] ; then
 		EXPECT_SHA=${sum}
 		break
 	fi
 done <<< "${SHASUMS}"
 
-wget -cO "${TDIR}/${ZIPFILE}" "${BASEURL}/${ZIPFILE}"
+wget -cO "${TDIR}/${DISTFILE}" "${URL}"
 
-read -r _ GOT_SHA < <( openssl sha256 < "${TDIR}/${ZIPFILE}" )
+read -r _ GOT_SHA < <( openssl sha256 < "${TDIR}/${DISTFILE}" )
 if [[ ${EXPECT_SHA} = ${GOT_SHA} ]] ; then
-	echo "Checksum for ${ZIPFILE} verified :-)"
+	echo "Checksum for ${DISTFILE} verified :-)"
 else
-	rm -f "${TDIR}/${ZIPFILE}" "${TDIR}/pup"
-	echo "Checksum for ${ZIPFILE} does not match :-("
+	rm -f "${TDIR}/${DISTFILE}" "${TDIR}/pup"
+	echo "Checksum for ${DISTFILE} does not match :-("
 	echo "   Expected: ${EXPECT_SHA}"
 	echo "        Got: ${GOT_SHA}"
 	exit 2
 fi 1>&2
 
 rm -f "${TDIR}/pup"
-unzip "${TDIR}/${ZIPFILE}" pup -d "${TDIR}"
+
+if (( USE_FORK )) ; then
+	(cd "${TDIR}" && xz -dk "${DISTFILE}" && mv "${DISTFILE%.*}" pup && chmod a+x pup)
+else
+	unzip "${TDIR}/${DISTFILE}" pup -d "${TDIR}"
+fi
