@@ -7,8 +7,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [macos-latest, ubuntu-18.04]
         compiler: [gcc, clang]
-        dynamic: [0, 1]
         nginx:
           # Mainline
           - 1.21.6
@@ -18,10 +18,15 @@ jobs:
           - 1.9.15
           # Oldest supported version.
           - 0.8.55
+        dynamic: [0, 1]
         exclude:
           - nginx: 0.8.55
             dynamic: 1
-    runs-on: ubuntu-18.04
+          - nginx: 0.8.55
+            os: macos-latest
+          - compiler: gcc
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
     env:
       CFLAGS: "-Wno-error"
     steps:
@@ -29,12 +34,16 @@ jobs:
         uses: actions/checkout@v2
       - name: Install Packages
         run: |
-          sudo apt update
-          sudo apt install -y libpcre3-dev libssl-dev
+          case $RUNNER_OS in
+            Linux )
+              sudo apt update
+              sudo apt install -y libpcre3-dev libssl-dev
+              ;;
+            * )
+              ;;
+          esac
           t/get-pup || echo 'Tests needing pup will be skipped'
       - name: Test
         env:
           CC: ${{ matrix.compiler }}
-        run: |
-          CC=${{ matrix.compiler }}
-          t/build-and-run ${{ matrix.nginx }} ${{ matrix.dynamic }}
+        run: t/build-and-run ${{ matrix.nginx }} ${{ matrix.dynamic }}
