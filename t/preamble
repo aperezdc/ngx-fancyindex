@@ -90,6 +90,11 @@ function nginx_start () {
 	if [[ $# -gt 0 || ! -r ${NGINX_CONF} ]] ; then nginx_conf "$@" ; fi
 	nginx_stop  # Ensure that it is not running.
 	nginx
+	local n=0
+	while [[ ! -r ${NGINX_PID} && n -lt 20 ]] ; do
+		sleep 0.1  # Wait until pid exists.
+		n=$((n+1))
+	done
 }
 
 function fetch () {
