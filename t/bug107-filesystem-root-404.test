@@ -1,0 +1,9 @@
+#! /bin/bash
+cat <<---
+Bug #107: 404 is returned when indexing filesystem root
+https://github.com/aperezdc/ngx-fancyindex/issues/107
+--
+nginx_start 'root /;'
+content=$(fetch)
+grep 'Index of /' <<< "${content}"  # It is an index
+grep '<table\>'   <<< "${content}"  # It contains a table
