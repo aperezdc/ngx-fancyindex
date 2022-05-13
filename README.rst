@@ -43,6 +43,13 @@ Then load the module in `/etc/nginx/nginx.conf` using::
 
    load_module "modules/ngx_http_fancyindex_module.so";
 
+macOS
+~~~~~
+
+Users can `install Nginx on macOS with MacPorts <https://ports.macports.org/port/nginx>`__; fancyindex is included::
+
+   sudo port install nginx
+
 Other platforms
 ~~~~~~~~~~~~~~~
 
