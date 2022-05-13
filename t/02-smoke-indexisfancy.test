@@ -7,5 +7,5 @@ the fancyindex module.
 nginx_start
 content=$(fetch --with-headers)
 grep 'Index of /' <<< "${content}"  # It is an index
-grep '\<table\>'  <<< "${content}"  # It contains a table
+grep '<table\>'   <<< "${content}"  # It contains a table
 grep '^  Content-Type:[[:space:]]*text/html' <<< "${content}"
