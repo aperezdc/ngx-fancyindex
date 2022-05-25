@@ -3,7 +3,7 @@
 # preamble
 # Copyright (C) 2016 Adrian Perez <aperez@igalia.com>
 #
-# Distributed under terms of the MIT license.
+# SPDX-License-Identifier: BSD-2-Clause
 #
 
 function nginx_conf_generate () {

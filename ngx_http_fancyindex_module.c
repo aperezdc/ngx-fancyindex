@@ -16,7 +16,7 @@
  * Base functionality heavy based upon the stock nginx autoindex module,
  * which in turn was made by Igor Sysoev, like the majority of nginx.
  *
- * Distributed under terms of the BSD license.
+ * SPDX-License-Identifier: BSD-2-Clause
  */
 
 #include <ngx_config.h>
