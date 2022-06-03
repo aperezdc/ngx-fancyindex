@@ -1,0 +1,8 @@
+#! /bin/bash
+cat <<---
+This test checks that case-sensitive sorting works.
+--
+
+nginx_start 'fancyindex_case_sensitive on;'
+content=$(fetch /case-sensitivity/)
+grep -A 999 '\<Bob\>' <<< "${content}" | grep '\<alice\>' # alice is after Bob
