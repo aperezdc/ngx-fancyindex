@@ -617,10 +617,10 @@ make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
 {
     ngx_buf_t *b;
     size_t blen = r->uri.len
-        + ngx_sizeof_ssz(t01_head1)
-        + ngx_sizeof_ssz(t02_head2)
-        + ngx_sizeof_ssz(t03_head3)
-        + ngx_sizeof_ssz(t04_body1)
+        + ngx_sizeof_ssz(t_head1)
+        + ngx_sizeof_ssz(t_head2)
+        + ngx_sizeof_ssz(t_head3)
+        + ngx_sizeof_ssz(t_body1)
         ;
 
     if (css_href.len) {
@@ -633,7 +633,7 @@ make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
     if ((b = ngx_create_temp_buf(r->pool, blen)) == NULL)
         return NULL;
 
-    b->last = ngx_cpymem_ssz(b->last, t01_head1);
+    b->last = ngx_cpymem_ssz(b->last, t_head1);
 
     if (css_href.len) {
         b->last = ngx_cpymem_str(b->last, css_href_pre);
@@ -641,10 +641,10 @@ make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
         b->last = ngx_cpymem_str(b->last, css_href_post);
     }
 
-    b->last = ngx_cpymem_ssz(b->last, t02_head2);
+    b->last = ngx_cpymem_ssz(b->last, t_head2);
     b->last = ngx_cpymem_str(b->last, r->uri);
-    b->last = ngx_cpymem_ssz(b->last, t03_head3);
-    b->last = ngx_cpymem_ssz(b->last, t04_body1);
+    b->last = ngx_cpymem_ssz(b->last, t_head3);
+    b->last = ngx_cpymem_ssz(b->last, t_body1);
 
     return b;
 }
@@ -667,7 +667,7 @@ make_content_buf(
     ngx_tm_t     tm;
     ngx_array_t  entries;
     ngx_time_t  *tp;
-    ngx_uint_t   i, j;
+    ngx_uint_t   i, j, sort_criterion;
     ngx_str_t    path;
     ngx_dir_t    dir;
     ngx_buf_t   *b;
@@ -854,17 +854,37 @@ make_content_buf(
 
     if (alcf->show_path)
         len = r->uri.len + escape_html
-          + ngx_sizeof_ssz(t05_body2)
-          + ngx_sizeof_ssz(t06_list1)
+          + ngx_sizeof_ssz(t_body2)
+          + ngx_sizeof_ssz(t_list_begin)
+          + ngx_sizeof_ssz(t_list_head)
+          + ngx_sizeof_ssz("desc sort-col-1")
+          + ngx_sizeof_ssz(t_list_colhead_name1)
+          + ngx_sizeof_ssz(t_list_colhead_name2)
+          + ngx_sizeof_ssz(t_list_colhead_size1)
+          + ngx_sizeof_ssz(t_list_colhead_size2)
+          + ngx_sizeof_ssz(t_list_colhead_date1)
+          + ngx_sizeof_ssz(t_list_colhead_date2)
+          + ngx_sizeof_ssz(" aria-sort=\"descending\"")
+          + ngx_sizeof_ssz(t_list_mid)
           + ngx_sizeof_ssz(t_parentdir_entry)
-          + ngx_sizeof_ssz(t07_list2)
+          + ngx_sizeof_ssz(t_list_end)
           + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
           ;
    else
         len = r->uri.len + escape_html
-          + ngx_sizeof_ssz(t06_list1)
+          + ngx_sizeof_ssz(t_list_begin)
+          + ngx_sizeof_ssz(t_list_head)
+          + ngx_sizeof_ssz("desc sort-col-1")
+          + ngx_sizeof_ssz(t_list_colhead_name1)
+          + ngx_sizeof_ssz(t_list_colhead_name2)
+          + ngx_sizeof_ssz(t_list_colhead_size1)
+          + ngx_sizeof_ssz(t_list_colhead_size2)
+          + ngx_sizeof_ssz(t_list_colhead_date1)
+          + ngx_sizeof_ssz(t_list_colhead_date2)
+          + ngx_sizeof_ssz(" aria-sort=\"descending\"")
+          + ngx_sizeof_ssz(t_list_mid)
           + ngx_sizeof_ssz(t_parentdir_entry)
-          + ngx_sizeof_ssz(t07_list2)
+          + ngx_sizeof_ssz(t_list_end)
           + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
           ;
 
@@ -926,44 +946,51 @@ make_content_buf(
             case 'M': /* Sort by mtime */
                 if (sort_descending) {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_mtime_desc;
-                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC)
+                    sort_criterion = NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC;
+                    if (sort_criterion != alcf->default_sort)
                         sort_url_args = "?C=M&amp;O=D";
                 }
                 else {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_mtime_asc;
-                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE)
+                    sort_criterion = NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE;
+                    if (sort_criterion != alcf->default_sort)
                         sort_url_args = "?C=M&amp;O=A";
                 }
                 break;
             case 'S': /* Sort by size */
                 if (sort_descending) {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_size_desc;
-                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC)
+                    sort_criterion = NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC;
+                    if (sort_criterion != alcf->default_sort)
                         sort_url_args = "?C=S&amp;O=D";
                 }
                 else {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_size_asc;
-                        if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE)
-                    sort_url_args = "?C=S&amp;O=A";
+                    sort_criterion = NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE;
+                    if (sort_criterion != alcf->default_sort)
+                        sort_url_args = "?C=S&amp;O=A";
                 }
                 break;
             case 'N': /* Sort by name */
             default:
                 if (sort_descending) {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_desc;
-                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC)
+                    sort_criterion = NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC;
+                    if (sort_criterion != alcf->default_sort)
                         sort_url_args = "?C=N&amp;O=D";
                 }
                 else {
                     sort_cmp_func = ngx_http_fancyindex_cmp_entries_name_asc;
-                    if (alcf->default_sort != NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME)
+                    sort_criterion = NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME;
+                    if (sort_criterion != alcf->default_sort)
                         sort_url_args = "?C=N&amp;O=A";
                 }
                 break;
         }
     }
     else {
-        switch (alcf->default_sort) {
+        sort_criterion = alcf->default_sort;
+        switch (sort_criterion) {
             case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC:
                 sort_cmp_func = ngx_http_fancyindex_cmp_entries_mtime_desc;
                 break;
@@ -1028,11 +1055,67 @@ make_content_buf(
     /* Display the path, if needed */
     if (alcf->show_path){
         b->last = last = (u_char *) ngx_escape_html(b->last, r->uri.data, r->uri.len);
-        b->last = ngx_cpymem_ssz(b->last, t05_body2);
+        b->last = ngx_cpymem_ssz(b->last, t_body2);
     }
 
     /* Open the <table> tag */
-    b->last = ngx_cpymem_ssz(b->last, t06_list1);
+    b->last = ngx_cpymem_ssz(b->last, t_list_begin);
+    switch (sort_criterion) {
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC:
+            b->last = ngx_cpymem_ssz(b->last, "desc sort-col-1");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME:
+            b->last = ngx_cpymem_ssz(b->last, "asc sort-col-1");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC:
+            b->last = ngx_cpymem_ssz(b->last, "desc sort-col-2");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE:
+            b->last = ngx_cpymem_ssz(b->last, "asc sort-col-2");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC:
+            b->last = ngx_cpymem_ssz(b->last, "desc sort-col-3");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE:
+            b->last = ngx_cpymem_ssz(b->last, "asc sort-col-3");
+            break;
+    }
+    b->last = ngx_cpymem_ssz(b->last, t_list_head);
+
+    /* Write the column headers */
+    b->last = ngx_cpymem_ssz(b->last, t_list_colhead_name1);
+    switch (sort_criterion) {
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME_DESC:
+            b->last = ngx_cpymem_ssz(b->last, " aria-sort=\"descending\"");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_NAME:
+            b->last = ngx_cpymem_ssz(b->last, " aria-sort=\"ascending\"");
+            break;
+    }
+    b->last = ngx_cpymem_ssz(b->last, t_list_colhead_name2);
+    b->last = ngx_cpymem_ssz(b->last, t_list_colhead_size1);
+    switch (sort_criterion) {
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE_DESC:
+            b->last = ngx_cpymem_ssz(b->last, " aria-sort=\"descending\"");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_SIZE:
+            b->last = ngx_cpymem_ssz(b->last, " aria-sort=\"ascending\"");
+            break;
+    }
+    b->last = ngx_cpymem_ssz(b->last, t_list_colhead_size2);
+    b->last = ngx_cpymem_ssz(b->last, t_list_colhead_date1);
+    switch (sort_criterion) {
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE_DESC:
+            b->last = ngx_cpymem_ssz(b->last, " aria-sort=\"descending\"");
+            break;
+        case NGX_HTTP_FANCYINDEX_SORT_CRITERION_DATE:
+            b->last = ngx_cpymem_ssz(b->last, " aria-sort=\"ascending\"");
+            break;
+    }
+    b->last = ngx_cpymem_ssz(b->last, t_list_colhead_date2);
+
+    /* Begin the table body */
+    b->last = ngx_cpymem_ssz(b->last, t_list_mid);
 
     tp = ngx_timeofday();
 
@@ -1132,7 +1215,7 @@ make_content_buf(
     }
 
     /* Output table bottom */
-    b->last = ngx_cpymem_ssz(b->last, t07_list2);
+    b->last = ngx_cpymem_ssz(b->last, t_list_end);
 
     *pb = b;
     return NGX_OK;
@@ -1262,8 +1345,8 @@ add_builtin_header:
             out[last].buf->pos = alcf->footer.local.data;
             out[last].buf->last = alcf->footer.local.data + alcf->footer.local.len;
         } else {
-            out[last].buf->pos = (u_char*) t08_foot1;
-            out[last].buf->last = (u_char*) t08_foot1 + sizeof(t08_foot1) - 1;
+            out[last].buf->pos = (u_char*) t_foot;
+            out[last].buf->last = (u_char*) t_foot + sizeof(t_foot) - 1;
         }
 
         out[last-1].buf->last_in_chain = 0;
@@ -1324,8 +1407,8 @@ add_builtin_header:
         if (out[0].buf == NULL)
             return NGX_ERROR;
         out[0].buf->memory = 1;
-        out[0].buf->pos = (u_char*) t08_foot1;
-        out[0].buf->last = (u_char*) t08_foot1 + sizeof(t08_foot1) - 1;
+        out[0].buf->pos = (u_char*) t_foot;
+        out[0].buf->last = (u_char*) t_foot + sizeof(t_foot) - 1;
         out[0].buf->last_in_chain = 1;
         out[0].buf->last_buf = 1;
         /* Directly send out the builtin footer */
