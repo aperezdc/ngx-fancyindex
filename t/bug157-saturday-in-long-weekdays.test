@@ -1,0 +1,27 @@
+#! /bin/bash
+cat <<---
+Check whether the Saturday long day name is available.
+https://github.com/aperezdc/ngx-fancyindex/issues/157
+--
+use pup
+nginx_start 'fancyindex_time_format "%A"; fancyindex_default_sort date;'
+
+mkdir -p "${TESTDIR}/weekdays"
+for (( i=2 ; i <= 8 ; i++ )) ; do
+	TZ=UTC touch -d "2023-01-0${i}T06:00:00" "${TESTDIR}/weekdays/day$i.txt"
+done
+ls "${TESTDIR}/weekdays"
+content=$(fetch /weekdays/)
+
+# We need row+1 because the first one is the table header.
+dayname=$(pup -p body table tbody \
+	'tr:nth-child(7)' 'td:nth-child(3)' 'text{}' \
+	<<< "$content")
+[[ $dayname = Saturday ]] || fail 'Sixth day is not Saturday'
+
+dayname=$(pup -p body table tbody \
+	'tr:nth-child(8)' 'td:nth-child(3)' 'text{}' \
+	<<< "$content")
+[[ $dayname = Sunday ]] || fail 'Seventh day is not Sunday'
+
+nginx_is_running || fail 'Nginx died'

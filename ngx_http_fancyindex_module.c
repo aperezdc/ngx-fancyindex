@@ -37,7 +37,7 @@ static const char *short_weekday[] = {
     "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
 };
 static const char *long_weekday[] = {
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sunday",
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
 };
 static const char *short_month[] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
