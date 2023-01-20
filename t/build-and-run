@@ -28,6 +28,7 @@ cd nginx-${NGINX}
 ./configure \
 	--add-${DYNAMIC:+dynamic-}module=.. \
 	--with-http_addition_module \
+	--without-http_rewrite_module \
 	--prefix="$(pwd)/../prefix"
 make -j"$JOBS"
 make install
