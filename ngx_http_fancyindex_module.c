@@ -1270,7 +1270,7 @@ add_builtin_header:
 
     /* If footer is disabled, chain up footer buffer. */
     if (alcf->footer.path.len == 0 || alcf->footer.local.len > 0) {
-        ngx_uint_t last = (alcf->header.path.len == 0) ? 2 : 1;
+        ngx_uint_t last = ((alcf->header.path.len > 0) && (alcf->header.local.len == 0)) ? 1 : 2;
 
         out[last-1].next = &out[last];
         out[last].buf = ngx_calloc_buf(r->pool);
@@ -1503,9 +1503,9 @@ ngx_http_fancyindex_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_conf_merge_value(conf->show_dot_files, prev->show_dot_files, 0);
 
     ngx_conf_merge_str_value(conf->header.path, prev->header.path, "");
-    ngx_conf_merge_str_value(conf->header.path, prev->header.local, "");
+    ngx_conf_merge_str_value(conf->header.local, prev->header.local, "");
     ngx_conf_merge_str_value(conf->footer.path, prev->footer.path, "");
-    ngx_conf_merge_str_value(conf->footer.path, prev->footer.local, "");
+    ngx_conf_merge_str_value(conf->footer.local, prev->footer.local, "");
 
     ngx_conf_merge_str_value(conf->css_href, prev->css_href, "");
     ngx_conf_merge_str_value(conf->time_format, prev->time_format, "%Y-%b-%d %H:%M");
