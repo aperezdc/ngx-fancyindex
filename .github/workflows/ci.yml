@@ -2,28 +2,24 @@
 name: Build
 on: [pull_request]
 
+permissions: { }
+
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-18.04]
+        os: [macos-latest, ubuntu-22.04]
         compiler: [gcc, clang]
         nginx:
           # Mainline
-          - 1.23.3
+          - 1.29.5
           # Stable.
-          - 1.22.1
-          # First version with loadable module support.
-          - 1.9.15
+          - 1.28.2
           # Oldest supported version.
-          - 0.8.55
+          - 1.14.2
         dynamic: [0, 1]
         exclude:
-          - nginx: 0.8.55
-            dynamic: 1
-          - nginx: 0.8.55
-            os: macos-latest
           - compiler: gcc
             os: macos-latest
     runs-on: ${{ matrix.os }}
@@ -31,7 +27,9 @@ jobs:
       CFLAGS: "-Wno-error"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Install Packages
         run: |
           case $RUNNER_OS in
