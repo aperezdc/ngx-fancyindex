@@ -3,6 +3,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-02-24
+### Added
+- New `fancyindex_case_sensitive` option, which configures whether file
+  name sorting is case-sensitive. (Patch by Mamadou Lamine NIANG
+  <<mlniangpro@gmail.com>> and Ryan Schmidt <<git@ryandesign.com>>,
+  [#152](https://github.com/aperezdc/ngx-fancyindex/pull/152).)
+
+### Fixed
+- Correctly handle generating indexes for the file system root.
+  (Patch by Ryan Schmidt <<git@ryandesign.com>>,
+  [#150](https://github.com/aperezdc/ngx-fancyindex/pull/150).)
+- Correctly handle using the `local` flag with the `fancyindex_header`
+  option. (Patch by Zoey <<zoey@z0ey.de>>,
+  [#166](https://github.com/aperezdc/ngx-fancyindex/pull/166/).)
+- Add missing name for “Saturday” in the array used to format long week
+  day names ([#158](https://github.com/aperezdc/ngx-fancyindex/pull/158).)
+
+### Removed
+- The `fancyindex_name_length` option has been removed. Instead, CSS is
+  used to hide the part of file names that overflows table cells. (Patch
+  by Anthony Ryan <<anthonyryan1@gmail.com>>,
+  [#132](https://github.com/aperezdc/ngx-fancyindex/pull/132).)
+
 ## [0.5.2] - 2021-10-28
 ### Fixed
 - Properly escape file names to ensure that file names are never renreded
@@ -182,7 +205,8 @@ All notable changes to this project will be documented in this file.
 - `NEWS.rst` file, to act as change log.
 
 
-[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.2...v0.6.0
 [0.5.2]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/aperezdc/ngx-fancyindex/compare/v0.4.4...v0.5.0
