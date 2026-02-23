@@ -1,0 +1,21 @@
+#! /bin/bash
+cat <<---
+Check whether 'fancyindex_{header,footer} ... local' works correctly.
+https://github.com/aperezdc/ngx-fancyindex/issues/120
+--
+use pup
+
+# Prepare a directory with two different headers
+mkdir -p "$TESTDIR/bug120"
+echo '<p class="header-target">header</p>' > "$TESTDIR/bug120/header.html"
+echo '<p class="footer-target">footer</p>' > "$TESTDIR/bug120/footer.html"
+touch "$TESTDIR"/bug120/{a,b,c,d}.txt
+
+nginx_start "fancyindex_header \"$TESTDIR/bug120/header.html\" local; fancyindex_footer \"$TESTDIR/bug120/footer.html\" local;"
+content=$(fetch /)
+
+target=$(pup -p '.header-target' 'text{}' <<< "$content")
+[[ $target = header ]] || fail 'Top page has wrong header'
+
+target=$(pup -p '.footer-target' 'text{}' <<< "$content")
+[[ $target = footer ]] || fail 'Sub page has wrong header'
