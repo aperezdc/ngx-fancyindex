@@ -26,12 +26,6 @@
 
 #include "template.h"
 
-#if defined(__GNUC__) && (__GNUC__ >= 3)
-# define ngx_force_inline __attribute__((__always_inline__))
-#else /* !__GNUC__ */
-# define ngx_force_inline
-#endif /* __GNUC__ */
-
 
 static const char *short_weekday[] = {
     "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
@@ -370,14 +364,8 @@ static char *ngx_http_fancyindex_ignore(ngx_conf_t    *cf,
 static uintptr_t
     ngx_fancyindex_escape_filename(u_char *dst, u_char*src, size_t size);
 
-/*
- * These are used only once per handler invocation. We can tell GCC to
- * inline them always, if possible (see how ngx_force_inline is defined
- * above).
- */
 static ngx_inline ngx_buf_t*
-    make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href)
-    ngx_force_inline;
+    make_header_buf(ngx_http_request_t *r, const ngx_str_t css_href);
 
 
 static ngx_command_t  ngx_http_fancyindex_commands[] = {
@@ -439,7 +427,7 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       NULL },
 
     { ngx_string("fancyindex_css_href"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, css_href),
@@ -481,7 +469,7 @@ static ngx_command_t  ngx_http_fancyindex_commands[] = {
       NULL },
 
     { ngx_string("fancyindex_time_format"),
-      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_FLAG,
+      NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
       NGX_HTTP_LOC_CONF_OFFSET,
       offsetof(ngx_http_fancyindex_loc_conf_t, time_format),
@@ -529,99 +517,11 @@ static const ngx_str_t css_href_post =
     ngx_string("\" type=\"text/css\"/>\n");
 
 
-#ifdef NGX_ESCAPE_URI_COMPONENT
 static inline uintptr_t
 ngx_fancyindex_escape_filename(u_char *dst, u_char *src, size_t size)
 {
     return ngx_escape_uri(dst, src, size, NGX_ESCAPE_URI_COMPONENT);
 }
-#else /* !NGX_ESCAPE_URI_COMPONENT */
-static uintptr_t
-ngx_fancyindex_escape_filename(u_char *dst, u_char *src, size_t size)
-{
-    /*
-     * The ngx_escape_uri() function will not escape colons or the
-     * ? character, which signals the beginning of the query string.
-     * So we handle those characters ourselves.
-     *
-     * TODO: Get rid of this once ngx_escape_uri() works as expected!
-     */
-
-    u_int escapes = 0;
-    u_char *psrc = src;
-    size_t psize = size;
-
-    while (psize--) {
-        switch (*psrc++) {
-            case ':':
-            case '?':
-            case '[':
-            case ']':
-                escapes++;
-                break;
-        }
-    }
-
-    if (dst == NULL) {
-        return escapes + ngx_escape_uri(NULL, src, size, NGX_ESCAPE_HTML);
-    }
-    else if (escapes == 0) {
-        /* No need to do extra escaping, avoid the temporary buffer */
-        return ngx_escape_uri(dst, src, size, NGX_ESCAPE_HTML);
-    }
-    else {
-        uintptr_t uescapes = ngx_escape_uri(NULL, src, size, NGX_ESCAPE_HTML);
-        size_t bufsz = size + 2 * uescapes;
-
-        /*
-         * GCC and CLANG both support stack-allocated variable length
-         * arrays. Take advantage of that to avoid a malloc-free cycle.
-         */
-#if defined(__GNUC__) || defined(__clang__)
-        u_char cbuf[bufsz];
-        u_char *buf = cbuf;
-#else  /* __GNUC__ || __clang__ */
-        u_char *buf = (u_char*) malloc(sizeof(u_char) * bufsz);
-#endif /* __GNUC__ || __clang__ */
-
-        ngx_escape_uri(buf, src, size, NGX_ESCAPE_HTML);
-
-        while (bufsz--) {
-            switch (*buf) {
-                case ':':
-                    *dst++ = '%';
-                    *dst++ = '3';
-                    *dst++ = 'A';
-                    break;
-                case '?':
-                    *dst++ = '%';
-                    *dst++ = '3';
-                    *dst++ = 'F';
-                    break;
-                case '[':
-                    *dst++ = '%';
-                    *dst++ = '5';
-                    *dst++ = 'B';
-                    break;
-                case ']':
-                    *dst++ = '%';
-                    *dst++ = '5';
-                    *dst++ = 'D';
-                    break;
-                default:
-                    *dst++ = *buf;
-            }
-            buf++;
-        }
-
-#if !defined(__GNUC__) && !defined(__clang__)
-        free(buf);
-#endif /* !__GNUC__ && !__clang__ */
-
-        return escapes + uescapes;
-    }
-}
-#endif /* NGX_ESCAPE_URI_COMPONENT */
 
 
 static ngx_inline ngx_buf_t*
@@ -864,21 +764,15 @@ make_content_buf(
 
     escape_html = ngx_escape_html(NULL, r->uri.data, r->uri.len);
 
+    len = r->uri.len + escape_html
+      + ngx_sizeof_ssz(t06_list1)
+      + ngx_sizeof_ssz(t_parentdir_entry)
+      + ngx_sizeof_ssz(t07_list2)
+      + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
+      ;
+
     if (alcf->show_path)
-        len = r->uri.len + escape_html
-          + ngx_sizeof_ssz(t05_body2)
-          + ngx_sizeof_ssz(t06_list1)
-          + ngx_sizeof_ssz(t_parentdir_entry)
-          + ngx_sizeof_ssz(t07_list2)
-          + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
-          ;
-   else
-        len = r->uri.len + escape_html
-          + ngx_sizeof_ssz(t06_list1)
-          + ngx_sizeof_ssz(t_parentdir_entry)
-          + ngx_sizeof_ssz(t07_list2)
-          + ngx_fancyindex_timefmt_calc_size (&alcf->time_format) * entries.nelts
-          ;
+        len += ngx_sizeof_ssz(t05_body2);
 
     /*
      * If we are a the root of the webserver (URI =  "/" --> length of 1),
@@ -1047,7 +941,7 @@ make_content_buf(
 
     /* Display the path, if needed */
     if (alcf->show_path){
-        b->last = last = (u_char *) ngx_escape_html(b->last, r->uri.data, r->uri.len);
+        b->last = (u_char *) ngx_escape_html(b->last, r->uri.data, r->uri.len);
         b->last = ngx_cpymem_ssz(b->last, t05_body2);
     }
 
@@ -1107,7 +1001,6 @@ make_content_buf(
         len = entry[i].utf_len;
 
         b->last = (u_char *) ngx_escape_html(b->last, entry[i].name.data, entry[i].name.len);
-        last = b->last - 3;
 
         if (entry[i].dir) {
             *b->last++ = '/';
@@ -1175,15 +1068,6 @@ ngx_http_fancyindex_handler(ngx_http_request_t *r)
     if (r->uri.data[r->uri.len - 1] != '/') {
         return NGX_DECLINED;
     }
-
-    /* TODO: Win32 */
-#if defined(nginx_version) \
-    && ((nginx_version < 7066) \
-        || ((nginx_version > 8000) && (nginx_version < 8038)))
-    if (r->zero_in_uri) {
-        return NGX_DECLINED;
-    }
-#endif
 
     if (!(r->method & (NGX_HTTP_GET|NGX_HTTP_HEAD))) {
         return NGX_DECLINED;
