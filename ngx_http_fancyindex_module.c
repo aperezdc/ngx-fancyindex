@@ -282,6 +282,7 @@ ngx_fancyindex_conf_set_headerfooter(ngx_conf_t *cf, ngx_command_t *cmd, void *c
 
             n -= r;
         }
+        ngx_close_file(file.fd);
         item->local.data[item->local.len] = '\0';
     }
 
