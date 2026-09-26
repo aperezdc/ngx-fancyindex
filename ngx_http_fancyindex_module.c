@@ -1010,34 +1010,34 @@ make_content_buf(
     if (entries.nelts > 1) {
         if (alcf->dirs_first)
         {
-            ngx_http_fancyindex_entry_t *l, *r;
+            ngx_http_fancyindex_entry_t *l, *range; 
 
             l = entry;
-            r = entry + entries.nelts - 1;
-            while (l < r)
+            range = entry + entries.nelts - 1;
+            while (l < range)
             {
-                while (l < r && l->dir)
+                while (l < range && l->dir)
                     l++;
-                while (l < r && !r->dir)
-                    r--;
-                if (l < r) {
-                    /* Now l points a file while r points a directory */
+                while (l < range && !range->dir)
+                    range--;
+                if (l < range) {
+                    /* Now 'l' points a file while 'range' points a directory */
                     ngx_http_fancyindex_entry_t tmp;
                     tmp = *l;
-                    *l = *r;
-                    *r = tmp;
+                    *l = *range;
+                    *range = tmp;
                 }
             }
-            if (r->dir)
-                r++;
+            if (range->dir)
+                range++;
 
-            if (r > entry)
+            if (range > entry)
                 /* Sort directories */
-                ngx_qsort(entry, (size_t)(r - entry),
+                ngx_qsort(entry, (size_t)(range - entry),
                         sizeof(ngx_http_fancyindex_entry_t), sort_cmp_func);
-            if (r < entry + entries.nelts)
+            if (range < entry + entries.nelts)
                 /* Sort files */
-                ngx_qsort(r, (size_t)(entry + entries.nelts - r),
+                ngx_qsort(range, (size_t)(entry + entries.nelts - range),
                         sizeof(ngx_http_fancyindex_entry_t), sort_cmp_func);
         } else {
             ngx_qsort(entry, (size_t)entries.nelts,
