@@ -1,0 +1,15 @@
+#! /bin/bash
+cat <<---
+Check that fancyindex_hide_symlinks hides links while retaining their targets.
+--
+use pup
+mkdir -p "${TESTDIR}/hide-symlinks"
+printf 'target\n' > "${TESTDIR}/hide-symlinks/target.txt"
+ln -s target.txt "${TESTDIR}/hide-symlinks/hidden-link"
+
+nginx_start 'fancyindex_hide_symlinks on;'
+content=$(fetch /hide-symlinks/)
+entries=$(pup -p body table tbody tr td:first-child a text{} <<< "${content}")
+grep -Fxq 'target.txt' <<< "${entries}" || fail 'Target file is missing'
+grep -Fxq 'hidden-link' <<< "${entries}" && fail 'Symlink is visible'
+nginx_is_running || fail 'Nginx died'

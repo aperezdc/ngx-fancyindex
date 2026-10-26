@@ -762,7 +762,7 @@ make_content_buf(
         if (!alcf->show_dot_files && ngx_de_name(&dir)[0] == '.')
             continue;
 
-        if (alcf->hide_symlinks && ngx_de_is_link (&dir))
+        if (alcf->hide_symlinks && dir.valid_info && ngx_de_is_link (&dir))
             continue;
 
 #if NGX_PCRE
@@ -796,7 +796,7 @@ make_content_buf(
         }
 #endif /* NGX_PCRE */
 
-        if (!dir.valid_info) {
+        if (!dir.valid_info || alcf->hide_symlinks) {
             /* 1 byte for '/' and 1 byte for terminating '\0' */
             if (path.len + 1 + len + 1 > allocated) {
                 allocated = path.len + 1 + len + 1
@@ -810,7 +810,21 @@ make_content_buf(
             }
 
             ngx_cpystrn(last, ngx_de_name(&dir), len + 1);
+        }
 
+        if (alcf->hide_symlinks && !dir.valid_info) {
+            /* d_type may be unavailable; use lstat before checking the entry. */
+            if (ngx_de_link_info(filename, &dir) == NGX_FILE_ERROR) {
+                ngx_log_error(NGX_LOG_ERR, r->connection->log, ngx_errno,
+                        ngx_de_link_info_n " \"%s\" failed", filename);
+                continue;
+            }
+
+            if (ngx_de_is_link(&dir))
+                continue;
+        }
+
+        if (!dir.valid_info) {
             if (ngx_de_info(filename, &dir) == NGX_FILE_ERROR) {
                 ngx_int_t err = ngx_errno;
 
